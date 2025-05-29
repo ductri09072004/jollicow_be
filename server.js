@@ -24,7 +24,9 @@ app.use("/api", ordersRoutes);
 app.use("/api", restaurantsRoutes);
 app.use("/api", tablesRoutes);
 app.use("/api", orderitemsRoutes);
+
 // Start server
 app.listen(PORT, () => {
+  // Log sẽ thông báo đúng cổng, nhưng không cần localhost trong môi trường đám mây
   console.log(`Server is running on http://localhost:${PORT}`);
 });
