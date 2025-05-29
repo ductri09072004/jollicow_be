@@ -18,32 +18,38 @@ export const getRequests = async (req, res) => {
 };
 
 // thêm danh sách
-// export const addRequest = async (req, res) => {
-//   try {
-//     const { 
-//       date_buy,
-//       email,
-//       type_id,
-//       user_id } = req.body;
+export const addRequest = async (req, res) => {
+  try {
+    const { 
+      id_order,
+      id_restaurant,
+      id_staff,
+      id_table,
+      note,
+      total_price,
+      date_create } = req.body;
 
-//     if ( !date_buy|| !email|| !type_id|| !user_id) {
-//       return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
-//     }
+    if ( !id_order|| !id_restaurant|| !id_staff|| !id_table||!total_price) {
+      return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
+    }
 
-//     const requestRef = database.ref("Account").push();
-//     await requestRef.set({
-//         date_buy,
-//         email,
-//         type_id,
-//         user_id 
-//     });
+    const requestRef = database.ref("Orders").push();
+    await requestRef.set({
+      id_order,
+      id_restaurant,
+      id_staff,
+      id_table,
+      note,
+      total_price,
+      date_create
+    });
 
-//     res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key });
-//   } catch (error) {
-//     console.error("Lỗi khi thêm giao dịch:", error);
-//     res.status(500).json({ error: "Lỗi khi thêm giao dịch" });
-//   }
-// };
+    res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key });
+  } catch (error) {
+    console.error("Lỗi khi thêm giao dịch:", error);
+    res.status(500).json({ error: "Lỗi khi thêm giao dịch" });
+  }
+};
 
 // // xóa danh sách
 // export const deleteRequest = async (req, res) => {
