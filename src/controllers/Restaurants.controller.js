@@ -17,33 +17,44 @@ export const getRequests = async (req, res) => {
   }
 };
 
-// thêm danh sách
-// export const addRequest = async (req, res) => {
-//   try {
-//     const { 
-//       date_buy,
-//       email,
-//       type_id,
-//       user_id } = req.body;
 
-//     if ( !date_buy|| !email|| !type_id|| !user_id) {
-//       return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
-//     }
+function generateRandomId() {
+  const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+  const randomNumber = Math.floor(1000 + Math.random() * 9000); // 4 chữ số
+  return `CH${randomChar}${randomNumber}`;
+}
 
-//     const requestRef = database.ref("Account").push();
-//     await requestRef.set({
-//         date_buy,
-//         email,
-//         type_id,
-//         user_id 
-//     });
+//thêm danh sách
+export const addRequest = async (req, res) => {
+  try {
+    const { 
+      address,
+      id_restaurant,
+      image,
+      name_restaurant 
+    } = req.body;
 
-//     res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key });
-//   } catch (error) {
-//     console.error("Lỗi khi thêm giao dịch:", error);
-//     res.status(500).json({ error: "Lỗi khi thêm giao dịch" });
-//   }
-// };
+    if (!address || !name_restaurant) {
+      return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
+    }
+
+    const finalIdRestaurant = id_restaurant || generateRandomId();
+
+    const requestRef = database.ref("Restaurants").push();
+    await requestRef.set({
+      address,
+      id_restaurant: finalIdRestaurant,
+      image: image || "",
+      name_restaurant 
+    });
+
+    res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key, id_restaurant: finalIdRestaurant });
+  } catch (error) {
+    console.error("Lỗi khi thêm giao dịch:", error);
+    res.status(500).json({ error: "Lỗi khi thêm giao dịch" });
+  }
+};
+
 
 // // xóa danh sách
 // export const deleteRequest = async (req, res) => {

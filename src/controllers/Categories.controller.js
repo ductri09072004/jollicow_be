@@ -17,25 +17,29 @@ export const getRequests = async (req, res) => {
   }
 };
 
-// thêm danh sách
+//thêm danh sách
 // export const addRequest = async (req, res) => {
 //   try {
 //     const { 
-//       date_buy,
-//       email,
-//       type_id,
-//       user_id } = req.body;
+//       id_order,
+//       id_restaurant,
+//       id_staff,
+//       id_table,
+//       note,
+//       total_price } = req.body;
 
-//     if ( !date_buy|| !email|| !type_id|| !user_id) {
+//     if ( !id_order|| !id_restaurant|| !id_staff|| !id_table||!total_price) {
 //       return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
 //     }
 
 //     const requestRef = database.ref("Account").push();
 //     await requestRef.set({
-//         date_buy,
-//         email,
-//         type_id,
-//         user_id 
+//       id_order,
+//       id_restaurant,
+//       id_staff,
+//       id_table,
+//       note,
+//       total_price
 //     });
 
 //     res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key });
