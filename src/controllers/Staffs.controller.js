@@ -48,7 +48,13 @@ export const authenticateUser = async (req, res) => {
         const match = await bcrypt.compare(password_hash, staff.password_hash);
         if (match) {
           isAuthenticated = true;
-          userInfo = { id: key, ...staff };
+          userInfo = {
+            id_staff: staff.id_staff,
+            name: staff.name,
+            phone: staff.phone,
+            role: staff.role,
+            restaurant_id: staff.restaurant_id,
+          };
           break;
         }
       }

@@ -17,6 +17,38 @@ export const getRequests = async (req, res) => {
   }
 };
 
+//loc theo dieu kien
+export const softRequests = async (req, res) => {
+  const { id_restaurant } = req.body;
+
+  try {
+    const requestRef = database.ref("Categories");
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const cates = snapshot.val();
+    const filteredMenus = [];
+
+    for (const key in cates) {
+      const cate = cates[key];
+      if (cate.id_restaurant === id_restaurant) {
+        filteredMenus.push({ id: key, ...cate });
+      }
+    }
+
+    res.json(filteredMenus);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
+
+
+
+
 //thêm danh sách
 // export const addRequest = async (req, res) => {
 //   try {

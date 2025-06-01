@@ -1,6 +1,6 @@
 import { database } from "../data/firebaseConfig.js";
 
-// Lấy danh sách tất cả requests từ Firebase
+// lấy danh sách bàn
 export const getRequests = async (req, res) => {
   try {
     const requestRef = database.ref("Menus");
@@ -16,6 +16,41 @@ export const getRequests = async (req, res) => {
     res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
   }
 };
+
+// lấy danh sách menu theo điều kiện
+export const softRequests = async (req, res) => {
+  const { id_category } = req.body;
+
+  try {
+    const requestRef = database.ref("Menus");
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const menus = snapshot.val();
+    const filteredMenus = [];
+
+    // Lọc các menu theo điều kiện
+    for (const key in menus) {
+      const menu = menus[key];
+      if (
+        // menu.restaurant_id === restaurant_id &&
+        menu.id_category === id_category
+      ) {
+        filteredMenus.push({ id: key, ...menu });
+      }
+    }
+
+    res.json(filteredMenus);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
+
+
 
 // thêm danh sách
 // export const addRequest = async (req, res) => {
