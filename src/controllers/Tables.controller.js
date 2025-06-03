@@ -48,6 +48,43 @@ export const softRequests = async (req, res) => {
   }
 };
 
+export const softAllRequests = async (req, res) => {
+  const { id_table, restaurant_id } = req.body;
+
+  try {
+    const requestRef = database.ref("Tables");
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const tables = snapshot.val();
+    let found = false;
+
+    // Kiểm tra từng bản ghi trong Tables
+    for (const key in tables) {
+      const table = tables[key];
+      if (
+        table.id_table === id_table &&
+        table.restaurant_id === restaurant_id
+      ) {
+        found = true;
+        break;
+      }
+    }
+
+    res.json({ exists: found });
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
+
+
+
+
+
 // thêm danh sách
 // export const addRequest = async (req, res) => {
 //   try {
