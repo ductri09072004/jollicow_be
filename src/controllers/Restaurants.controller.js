@@ -30,8 +30,8 @@ export const addRequest = async (req, res) => {
     const { 
       address,
       id_restaurant,
-      image,
-      name_restaurant 
+      name_restaurant,
+      number_tax 
     } = req.body;
 
     if (!address || !name_restaurant) {
@@ -44,8 +44,8 @@ export const addRequest = async (req, res) => {
     await requestRef.set({
       address,
       id_restaurant: finalIdRestaurant,
-      image: image || "",
-      name_restaurant 
+      name_restaurant,
+      number_tax 
     });
 
     res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key, id_restaurant: finalIdRestaurant });

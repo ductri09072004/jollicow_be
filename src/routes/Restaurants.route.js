@@ -7,5 +7,6 @@ router.get("/restaurants", getRequests);
 router.post("/restaurants", addRequest);
 // router.delete("/account/:id", deleteRequest);
 // router.put("/account/:id", updateRequest);
+
 // Xuất theo chuẩn ES Module
 export default router;
