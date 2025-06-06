@@ -243,6 +243,42 @@ export const deleteAccount = async (req, res) => {
   }
 };
 
+export const addIDResRequest = async (req, res) => {
+  try {
+    const { id_staff, restaurant_id } = req.body;
+
+    if (!id_staff) {
+      return res.status(400).json({ error: "Thiếu id_staff để cập nhật" });
+    }
+
+    const staffsRef = database.ref("Staffs");
+    const snapshot = await staffsRef.once("value");
+    const staffs = snapshot.val() || {};
+
+    const staffEntry = Object.entries(staffs).find(
+      ([_, staff]) => staff.id_staff === id_staff
+    );
+
+    if (!staffEntry) {
+      return res.status(404).json({ error: "Không tìm thấy staff với id_staff này" });
+    }
+
+    const [firebaseKey] = staffEntry;
+
+    await staffsRef.child(firebaseKey).update({
+      restaurant_id: restaurant_id || "",
+    });
+
+    return res.status(200).json({
+      message: "Đã cập nhật restaurant_id cho staff",
+      id_staff,
+    });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật staff:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi cập nhật staff" });
+  }
+};
+
 
 
 
