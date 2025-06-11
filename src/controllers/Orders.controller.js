@@ -17,6 +17,39 @@ export const getRequests = async (req, res) => {
   }
 };
 
+export const fillerbyResRequests = async (req, res) => {
+  try {
+    const { id_restaurant } = req.body;
+
+    if (!id_restaurant) {
+      return res.status(400).json({ error: "Thiếu id_restaurant trong body" });
+    }
+
+    const requestRef = database.ref("Orders");
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const allOrders = snapshot.val();
+    const filteredOrders = {};
+
+    // Lọc đơn hàng theo id_restaurant
+    Object.keys(allOrders).forEach((key) => {
+      const order = allOrders[key];
+      if (order.id_restaurant === id_restaurant) {
+        filteredOrders[key] = order;
+      }
+    });
+
+    res.json(filteredOrders);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
+
 // thêm danh sách
 export const addRequest = async (req, res) => {
   try {
@@ -51,7 +84,123 @@ export const addRequest = async (req, res) => {
   }
 };
 
-// // xóa danh sách
+//lọc theo trạng thái xác nhận
+export const filletbyStatusRequests = async (req, res) => {
+  try {
+    const { id_restaurant } = req.body;
+
+    if (!id_restaurant) {
+      return res.status(400).json({ error: "Thiếu id_restaurant trong body" });
+    }
+
+    const requestRef = database.ref("Orders");
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const allOrders = snapshot.val();
+    const filteredOrders = {};
+
+    // Lọc theo id_restaurant và status_confirm = true
+    Object.keys(allOrders).forEach((key) => {
+      const order = allOrders[key];
+      if (
+        order.id_restaurant === id_restaurant &&
+        order.status_confirm === true
+      ) {
+        filteredOrders[key] = order;
+      }
+    });
+
+    res.json(filteredOrders);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
+
+//thay đổi status_confirm
+export const updateStatusConfirm = async (req, res) => {
+  try {
+    const { id_order } = req.body;
+
+    if (!id_order) {
+      return res.status(400).json({ error: "Thiếu id_order" });
+    }
+
+    const ordersRef = database.ref("Orders");
+    const snapshot = await ordersRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu đơn hàng" });
+    }
+
+    const orders = snapshot.val();
+    let orderKey = null;
+
+    // Tìm key của đơn hàng dựa vào id_order
+    Object.keys(orders).forEach((key) => {
+      if (orders[key].id_order === id_order) {
+        orderKey = key;
+      }
+    });
+
+    if (!orderKey) {
+      return res.status(404).json({ error: "Đơn hàng không tồn tại" });
+    }
+
+    const orderRef = database.ref(`Orders/${orderKey}`);
+    await orderRef.update({ status_confirm: true });
+
+    res.json({ message: "Cập nhật status_confirm thành công" });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật trạng thái" });
+  }
+};
+
+//cập nhật status
+export const updateStatus = async (req, res) => {
+  try {
+    const { id_order } = req.body;
+
+    if (!id_order) {
+      return res.status(400).json({ error: "Thiếu id_order" });
+    }
+
+    const ordersRef = database.ref("Orders");
+    const snapshot = await ordersRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu đơn hàng" });
+    }
+
+    const orders = snapshot.val();
+    let orderKey = null;
+
+    // Tìm key của đơn hàng dựa vào id_order
+    Object.keys(orders).forEach((key) => {
+      if (orders[key].id_order === id_order) {
+        orderKey = key;
+      }
+    });
+
+    if (!orderKey) {
+      return res.status(404).json({ error: "Đơn hàng không tồn tại" });
+    }
+
+    const orderRef = database.ref(`Orders/${orderKey}`);
+    await orderRef.update({ status_order: true });
+
+    res.json({ message: "Cập nhật status_orders thành công" });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật trạng thái" });
+  }
+};
+
 // export const deleteRequest = async (req, res) => {
 //   try {
 //     const { id } = req.params;
