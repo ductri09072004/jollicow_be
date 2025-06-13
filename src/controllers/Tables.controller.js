@@ -17,6 +17,7 @@ export const getRequests = async (req, res) => {
   }
 };
 
+//lọc theo bàn
 export const softRequests = async (req, res) => {
   const {id_table} = req.body;
 
@@ -48,6 +49,7 @@ export const softRequests = async (req, res) => {
   }
 };
 
+//auth id_table và id_restaurant
 export const softAllRequests = async (req, res) => {
   const { id_table, restaurant_id } = req.body;
 
@@ -81,83 +83,87 @@ export const softAllRequests = async (req, res) => {
   }
 };
 
+//thêm danh sách bàn
+export const addRequest = async (req, res) => {
+  try {
+    const { 
+      id_table,
+      restaurant_id } = req.body;
+
+    if ( !id_table|| !restaurant_id) {
+      return res.status(400).json({ error: "Thiếu thông tin bàn" });
+    }
+
+    const requestRef = database.ref("Tables").push();
+    await requestRef.set({
+      id_table,
+      restaurant_id
+    });
+
+    res.status(201).json({ message: "Bàn đã được thêm", id: requestRef.key });
+  } catch (error) {
+    console.error("Lỗi khi thêm bàn:", error);
+    res.status(500).json({ error: "Lỗi khi thêm bàn" });
+  }
+};
+
+// xóa danh sách
+export const deleteRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID danh mục" });
+    }
+
+    const requestRef = database.ref(`Tables/${id}`);
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Danh mục không tồn tại" });
+    }
+
+    await requestRef.remove();
+    res.status(200).json({ message: "Danh mục đã được xóa" });
+  } catch (error) {
+    console.error("Lỗi khi xóa danh mục:", error);
+    res.status(500).json({ error: "Lỗi khi xóa danh mục" });
+  }
+};
 
 
+// Cập nhật giao dịch
+export const updateTableByIdTable = async (req, res) => {
+  try {
+    const { id_table, id_newtable, restaurant_id } = req.body;
+
+    if (!id_table || !id_newtable || !restaurant_id) {
+      return res.status(400).json({ error: "Thiếu dữ liệu id_table, id_newtable hoặc restaurant_id" });
+    }
+
+    const tableRef = database.ref("Tables");
+    const snapshot = await tableRef.once("value");
+    const data = snapshot.val();
+
+    let updated = false;
+
+    for (const key in data) {
+      const table = data[key];
+      if (table.id_table === id_table && table.restaurant_id === restaurant_id) {
+        await tableRef.child(key).update({ id_table: id_newtable });
+        updated = true;
+        break; // Dừng sau khi cập nhật 1 bản ghi
+      }
+    }
+
+    if (updated) {
+      res.status(200).json({ message: `Đã cập nhật bàn ${id_table} thành ${id_newtable}` });
+    } else {
+      res.status(404).json({ error: `Không tìm thấy bàn có id_table = ${id_table} và restaurant_id = ${restaurant_id}` });
+    }
+  } catch (error) {
+    console.error("Lỗi khi cập nhật bàn:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi cập nhật bàn" });
+  }
+};
 
 
-// thêm danh sách
-// export const addRequest = async (req, res) => {
-//   try {
-//     const { 
-//       date_buy,
-//       email,
-//       type_id,
-//       user_id } = req.body;
-
-//     if ( !date_buy|| !email|| !type_id|| !user_id) {
-//       return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
-//     }
-
-//     const requestRef = database.ref("Account").push();
-//     await requestRef.set({
-//         date_buy,
-//         email,
-//         type_id,
-//         user_id 
-//     });
-
-//     res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key });
-//   } catch (error) {
-//     console.error("Lỗi khi thêm giao dịch:", error);
-//     res.status(500).json({ error: "Lỗi khi thêm giao dịch" });
-//   }
-// };
-
-// // xóa danh sách
-// export const deleteRequest = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     if (!id) {
-//       return res.status(400).json({ error: "Thiếu ID danh mục" });
-//     }
-
-//     const requestRef = database.ref(`Account/${id}`);
-//     const snapshot = await requestRef.once("value");
-
-//     if (!snapshot.exists()) {
-//       return res.status(404).json({ error: "Danh mục không tồn tại" });
-//     }
-
-//     await requestRef.remove();
-//     res.status(200).json({ message: "Danh mục đã được xóa" });
-//   } catch (error) {
-//     console.error("Lỗi khi xóa danh mục:", error);
-//     res.status(500).json({ error: "Lỗi khi xóa danh mục" });
-//   }
-// };
-
-// // Cập nhật giao dịch
-// export const updateRequest = async (req, res) => {
-//     try {
-//       const { id } = req.params;
-//       const updatedData = req.body;
-  
-//       if (!id) {
-//         return res.status(400).json({ error: "Thiếu ID giao dịch" });
-//       }
-  
-//       const requestRef = database.ref(`Account/${id}`);
-//       const snapshot = await requestRef.once("value");
-  
-//       if (!snapshot.exists()) {
-//         return res.status(404).json({ error: "Giao dịch không tồn tại" });
-//       }
-  
-//       await requestRef.update(updatedData);
-//       res.status(200).json({ message: "Giao dịch đã được cập nhật" });
-//     } catch (error) {
-//       console.error("Lỗi khi cập nhật giao dịch:", error);
-//       res.status(500).json({ error: "Lỗi khi cập nhật giao dịch" });
-//     }
-//   };
-  

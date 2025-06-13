@@ -51,34 +51,47 @@ export const softRequests = async (req, res) => {
 };
 
 
-
 // thêm danh sách
-// export const addRequest = async (req, res) => {
-//   try {
-//     const { 
-//       date_buy,
-//       email,
-//       type_id,
-//       user_id } = req.body;
+export const addRequest = async (req, res) => {
+  try {
+    const { 
+      id_category,
+      image,
+      name,
+      price,
+      restaurant_id
+    } = req.body;
 
-//     if ( !date_buy|| !email|| !type_id|| !user_id) {
-//       return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
-//     }
+    // Kiểm tra các trường bắt buộc (bỏ qua id_dishes và status vì tự sinh)
+    if (!id_category || !name || !price || !restaurant_id) {
+      return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
+    }
 
-//     const requestRef = database.ref("Account").push();
-//     await requestRef.set({
-//         date_buy,
-//         email,
-//         type_id,
-//         user_id 
-//     });
+    // Tạo id_dishes dạng "ME" + 1 chữ cái + 4 số
+    const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+    const randomNumber = Math.floor(1000 + Math.random() * 9000); // 4 chữ số
+    const id_dishes = `ME${randomChar}${randomNumber}`;
 
-//     res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key });
-//   } catch (error) {
-//     console.error("Lỗi khi thêm giao dịch:", error);
-//     res.status(500).json({ error: "Lỗi khi thêm giao dịch" });
-//   }
-// };
+    const status = true; // Luôn true
+
+    const requestRef = database.ref("Menus").push();
+    await requestRef.set({
+      id_category,
+      id_dishes,
+      image: image || "", // Nếu không có thì để rỗng
+      name,
+      price,
+      restaurant_id,
+      status
+    });
+
+    res.status(201).json({ message: "Món ăn đã được thêm", id: requestRef.key });
+  } catch (error) {
+    console.error("Lỗi khi thêm món ăn:", error);
+    res.status(500).json({ error: "Lỗi khi thêm món ăn" });
+  }
+};
+
 
 // // xóa danh sách
 // export const deleteRequest = async (req, res) => {
