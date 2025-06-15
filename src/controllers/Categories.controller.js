@@ -46,86 +46,101 @@ export const softRequests = async (req, res) => {
   }
 };
 
-
-
+function generateRandomId() {
+  const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+  const randomNumber = Math.floor(1000 + Math.random() * 9000); // 4 chữ số
+  return `CA${randomChar}${randomNumber}`;
+}
 
 //thêm danh sách
-// export const addRequest = async (req, res) => {
-//   try {
-//     const { 
-//       id_order,
-//       id_restaurant,
-//       id_staff,
-//       id_table,
-//       note,
-//       total_price } = req.body;
+export const addRequest = async (req, res) => {
+  try {
+    const { 
+      id_restaurant,
+      id_category,
+      name } = req.body;
 
-//     if ( !id_order|| !id_restaurant|| !id_staff|| !id_table||!total_price) {
-//       return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
-//     }
+    if (!name|| !id_restaurant ) {
+      return res.status(400).json({ error: "Thiếu thông tin json" });
+    }
 
-//     const requestRef = database.ref("Account").push();
-//     await requestRef.set({
-//       id_order,
-//       id_restaurant,
-//       id_staff,
-//       id_table,
-//       note,
-//       total_price
-//     });
+    const finalIdRestaurant = id_category || generateRandomId();
 
-//     res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key });
-//   } catch (error) {
-//     console.error("Lỗi khi thêm giao dịch:", error);
-//     res.status(500).json({ error: "Lỗi khi thêm giao dịch" });
-//   }
-// };
+    const requestRef = database.ref("Categories").push();
+    await requestRef.set({
+      id_restaurant,
+      name,
+      id_category : finalIdRestaurant
+    });
+
+    res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key });
+  } catch (error) {
+    console.error("Lỗi khi thêm giao dịch:", error);
+    res.status(500).json({ error: "Lỗi khi thêm giao dịch" });
+  }
+};
 
 // // xóa danh sách
-// export const deleteRequest = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     if (!id) {
-//       return res.status(400).json({ error: "Thiếu ID danh mục" });
-//     }
+export const deleteRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID danh mục" });
+    }
 
-//     const requestRef = database.ref(`Account/${id}`);
-//     const snapshot = await requestRef.once("value");
+    const requestRef = database.ref(`Categories/${id}`);
+    const snapshot = await requestRef.once("value");
 
-//     if (!snapshot.exists()) {
-//       return res.status(404).json({ error: "Danh mục không tồn tại" });
-//     }
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Danh mục không tồn tại" });
+    }
 
-//     await requestRef.remove();
-//     res.status(200).json({ message: "Danh mục đã được xóa" });
-//   } catch (error) {
-//     console.error("Lỗi khi xóa danh mục:", error);
-//     res.status(500).json({ error: "Lỗi khi xóa danh mục" });
-//   }
-// };
+    await requestRef.remove();
+    res.status(200).json({ message: "Danh mục đã được xóa" });
+  } catch (error) {
+    console.error("Lỗi khi xóa danh mục:", error);
+    res.status(500).json({ error: "Lỗi khi xóa danh mục" });
+  }
+};
 
 // // Cập nhật giao dịch
-// export const updateRequest = async (req, res) => {
-//     try {
-//       const { id } = req.params;
-//       const updatedData = req.body;
-  
-//       if (!id) {
-//         return res.status(400).json({ error: "Thiếu ID giao dịch" });
-//       }
-  
-//       const requestRef = database.ref(`Account/${id}`);
-//       const snapshot = await requestRef.once("value");
-  
-//       if (!snapshot.exists()) {
-//         return res.status(404).json({ error: "Giao dịch không tồn tại" });
-//       }
-  
-//       await requestRef.update(updatedData);
-//       res.status(200).json({ message: "Giao dịch đã được cập nhật" });
-//     } catch (error) {
-//       console.error("Lỗi khi cập nhật giao dịch:", error);
-//       res.status(500).json({ error: "Lỗi khi cập nhật giao dịch" });
-//     }
-//   };
+export const updateRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedData = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID giao dịch" });
+    }
+
+    const requestRef = database.ref(`Categories/${id}`);
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Giao dịch không tồn tại" });
+    }
+
+    // Chỉ cho phép cập nhật các trường này
+    const allowedFields = ["name"];
+    const filteredData = {};
+
+    for (const key of allowedFields) {
+      if (updatedData.hasOwnProperty(key)) {
+        filteredData[key] = updatedData[key];
+      }
+    }
+
+    // Kiểm tra nếu không có trường nào hợp lệ để cập nhật
+    if (Object.keys(filteredData).length === 0) {
+      return res.status(400).json({ error: "Không có trường hợp lệ để cập nhật" });
+    }
+
+    await requestRef.update(filteredData);
+    res.status(200).json({ message: "Giao dịch đã được cập nhật" });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật giao dịch:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật giao dịch" });
+  }
+};
+
   

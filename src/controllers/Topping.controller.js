@@ -70,7 +70,6 @@ export const createTopping = async (req, res) => {
   }
 };
 
-
 // Lọc topping theo id_dishes (POST)
 export const filterToppingsByDishId = async (req, res) => {
   try {
@@ -105,6 +104,152 @@ export const filterToppingsByDishId = async (req, res) => {
   } catch (error) {
     console.error("Lỗi khi lọc topping:", error);
     res.status(500).json({ error: "Lỗi server khi lọc topping" });
+  }
+};
+
+//delete cả 1 nhóm topping
+export const deleteRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID danh mục" });
+    }
+
+    const requestRef = database.ref(`Topping/${id}`);
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Danh mục không tồn tại" });
+    }
+
+    await requestRef.remove();
+    res.status(200).json({ message: "Danh mục đã được xóa" });
+  } catch (error) {
+    console.error("Lỗi khi xóa danh mục:", error);
+    res.status(500).json({ error: "Lỗi khi xóa danh mục" });
+  }
+};
+
+//cập nhật name detail
+export const updateNameDetailRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedData = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID giao dịch" });
+    }
+
+    const requestRef = database.ref(`Topping/${id}`);
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Giao dịch không tồn tại" });
+    }
+
+    // Chỉ cho phép cập nhật các trường này
+    const allowedFields = ["name_details"];
+    const filteredData = {};
+
+    for (const key of allowedFields) {
+      if (updatedData.hasOwnProperty(key)) {
+        filteredData[key] = updatedData[key];
+      }
+    }
+
+    // Kiểm tra nếu không có trường nào hợp lệ để cập nhật
+    if (Object.keys(filteredData).length === 0) {
+      return res.status(400).json({ error: "Không có trường hợp lệ để cập nhật" });
+    }
+
+    await requestRef.update(filteredData);
+    res.status(200).json({ message: "Giao dịch đã được cập nhật" });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật giao dịch:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật giao dịch" });
+  }
+};
+
+//delete 1 option trong nhóm topping
+export const deleteOptionRequest = async (req, res) => {
+  try {
+    const { id } = req.params; // id của topping (vd: -OIu7ozAaJquVrCr1E0p)
+    const { id_option } = req.body; // id_option của option cần xoá
+
+    if (!id || !id_option) {
+      return res.status(400).json({ error: "Thiếu ID danh mục hoặc ID option" });
+    }
+
+    const requestRef = database.ref(`Topping/${id}`);
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Danh mục không tồn tại" });
+    }
+
+    const data = snapshot.val();
+    const existingOptions = data.options || [];
+
+    // Kiểm tra xem option có tồn tại không
+    const filteredOptions = existingOptions.filter(opt => opt.id_option !== id_option);
+    if (filteredOptions.length === existingOptions.length) {
+      return res.status(404).json({ error: "Không tìm thấy option cần xoá" });
+    }
+
+    // Cập nhật lại options sau khi xoá
+    await requestRef.update({ options: filteredOptions });
+
+    res.status(200).json({ message: "Option đã được xoá thành công" });
+  } catch (error) {
+    console.error("Lỗi khi xoá option:", error);
+    res.status(500).json({ error: "Lỗi khi xoá option" });
+  }
+};
+
+//chỉnh sửa 1 option
+export const updateOptionRequest = async (req, res) => {
+  try {
+    const { id } = req.params; // id của topping (vd: -OIu7ozAaJquVrCr1E0p)
+    const { id_option, name, price } = req.body;
+
+    if (!id || !id_option) {
+      return res.status(400).json({ error: "Thiếu ID danh mục hoặc ID option" });
+    }
+
+    const requestRef = database.ref(`Topping/${id}`);
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Danh mục không tồn tại" });
+    }
+
+    const data = snapshot.val();
+    const existingOptions = data.options || [];
+
+    let optionFound = false;
+
+    const updatedOptions = existingOptions.map(opt => {
+      if (opt.id_option === id_option) {
+        optionFound = true;
+        return {
+          ...opt,
+          name: typeof name === 'string' ? name : opt.name,
+          price: typeof price === 'number' ? price : opt.price,
+        };
+      }
+      return opt;
+    });
+
+    if (!optionFound) {
+      return res.status(404).json({ error: "Không tìm thấy option cần cập nhật" });
+    }
+
+    await requestRef.update({ options: updatedOptions });
+
+    res.status(200).json({ message: "Option đã được cập nhật thành công" });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật option:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật option" });
   }
 };
 
