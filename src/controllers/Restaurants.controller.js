@@ -31,10 +31,11 @@ export const addRequest = async (req, res) => {
       address,
       id_restaurant,
       name_restaurant,
-      number_tax 
+      number_tax,
+      ip_wifi = ""
     } = req.body;
 
-    if (!address || !name_restaurant) {
+    if (!address || !name_restaurant ||!number_tax) {
       return res.status(400).json({ error: "Thiếu thông tin giao dịch" });
     }
 
@@ -45,7 +46,8 @@ export const addRequest = async (req, res) => {
       address,
       id_restaurant: finalIdRestaurant,
       name_restaurant,
-      number_tax 
+      number_tax,
+      ip_wifi 
     });
 
     res.status(201).json({ message: "Giao dịch đã được thêm", id: requestRef.key, id_restaurant: finalIdRestaurant });
@@ -57,50 +59,66 @@ export const addRequest = async (req, res) => {
 
 
 // // xóa danh sách
-// export const deleteRequest = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     if (!id) {
-//       return res.status(400).json({ error: "Thiếu ID danh mục" });
-//     }
+export const deleteRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID danh mục" });
+    }
 
-//     const requestRef = database.ref(`Account/${id}`);
-//     const snapshot = await requestRef.once("value");
+    const requestRef = database.ref(`Restaurants/${id}`);
+    const snapshot = await requestRef.once("value");
 
-//     if (!snapshot.exists()) {
-//       return res.status(404).json({ error: "Danh mục không tồn tại" });
-//     }
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Danh mục không tồn tại" });
+    }
 
-//     await requestRef.remove();
-//     res.status(200).json({ message: "Danh mục đã được xóa" });
-//   } catch (error) {
-//     console.error("Lỗi khi xóa danh mục:", error);
-//     res.status(500).json({ error: "Lỗi khi xóa danh mục" });
-//   }
-// };
+    await requestRef.remove();
+    res.status(200).json({ message: "Danh mục đã được xóa" });
+  } catch (error) {
+    console.error("Lỗi khi xóa danh mục:", error);
+    res.status(500).json({ error: "Lỗi khi xóa danh mục" });
+  }
+};
 
 // // Cập nhật giao dịch
-// export const updateRequest = async (req, res) => {
-//     try {
-//       const { id } = req.params;
-//       const updatedData = req.body;
-  
-//       if (!id) {
-//         return res.status(400).json({ error: "Thiếu ID giao dịch" });
-//       }
-  
-//       const requestRef = database.ref(`Account/${id}`);
-//       const snapshot = await requestRef.once("value");
-  
-//       if (!snapshot.exists()) {
-//         return res.status(404).json({ error: "Giao dịch không tồn tại" });
-//       }
-  
-//       await requestRef.update(updatedData);
-//       res.status(200).json({ message: "Giao dịch đã được cập nhật" });
-//     } catch (error) {
-//       console.error("Lỗi khi cập nhật giao dịch:", error);
-//       res.status(500).json({ error: "Lỗi khi cập nhật giao dịch" });
-//     }
-//   };
+export const updateRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedData = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID giao dịch" });
+    }
+
+    const requestRef = database.ref(`Restaurants/${id}`);
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Giao dịch không tồn tại" });
+    }
+
+    // Chỉ cho phép cập nhật các trường này
+    const allowedFields = ["address","ip_wifi","name_restaurant","number_tax"];
+    const filteredData = {};
+
+    for (const key of allowedFields) {
+      if (updatedData.hasOwnProperty(key)) {
+        filteredData[key] = updatedData[key];
+      }
+    }
+
+    // Kiểm tra nếu không có trường nào hợp lệ để cập nhật
+    if (Object.keys(filteredData).length === 0) {
+      return res.status(400).json({ error: "Không có trường hợp lệ để cập nhật" });
+    }
+
+    await requestRef.update(filteredData);
+    res.status(200).json({ message: "Giao dịch đã được cập nhật" });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật giao dịch:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật giao dịch" });
+  }
+};
+
   
