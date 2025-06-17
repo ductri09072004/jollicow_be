@@ -1,10 +1,10 @@
 import express from "express";
-import { getRequests} from "../controllers/OrderItems.controller.js";
+import { getRequests,addRequest} from "../controllers/OrderItems.controller.js";
 
 const router = express.Router();
 
 router.get("/orderitems", getRequests);
-// router.post("/account", addRequest);
+router.post("/orderitems", addRequest);
 // router.delete("/account/:id", deleteRequest);
 // router.put("/account/:id", updateRequest);
 // Xuất theo chuẩn ES Module
