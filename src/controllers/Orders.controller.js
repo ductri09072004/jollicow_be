@@ -85,12 +85,12 @@ export const addRequest = async (req, res) => {
 };
 
 //lọc theo trạng thái xác nhận
-export const filletbyStatusRequests = async (req, res) => {
+export const filterByStatusRequests = async (req, res) => {
   try {
-    const { id_restaurant } = req.body;
+    const { id_restaurant, status_order } = req.body;
 
-    if (!id_restaurant) {
-      return res.status(400).json({ error: "Thiếu id_restaurant trong body" });
+    if (!id_restaurant || !status_order) {
+      return res.status(400).json({ error: "Thiếu id_restaurant hoặc status_order trong body" });
     }
 
     const requestRef = database.ref("Orders");
@@ -103,12 +103,12 @@ export const filletbyStatusRequests = async (req, res) => {
     const allOrders = snapshot.val();
     const filteredOrders = {};
 
-    // Lọc theo id_restaurant và status_confirm = true
     Object.keys(allOrders).forEach((key) => {
       const order = allOrders[key];
+
       if (
         order.id_restaurant === id_restaurant &&
-        order.status_confirm === true
+        order.status_order === status_order
       ) {
         filteredOrders[key] = order;
       }
@@ -121,53 +121,13 @@ export const filletbyStatusRequests = async (req, res) => {
   }
 };
 
-//thay đổi status_confirm
-export const updateStatusConfirm = async (req, res) => {
-  try {
-    const { id_order } = req.body;
-
-    if (!id_order) {
-      return res.status(400).json({ error: "Thiếu id_order" });
-    }
-
-    const ordersRef = database.ref("Orders");
-    const snapshot = await ordersRef.once("value");
-
-    if (!snapshot.exists()) {
-      return res.status(404).json({ error: "Không có dữ liệu đơn hàng" });
-    }
-
-    const orders = snapshot.val();
-    let orderKey = null;
-
-    // Tìm key của đơn hàng dựa vào id_order
-    Object.keys(orders).forEach((key) => {
-      if (orders[key].id_order === id_order) {
-        orderKey = key;
-      }
-    });
-
-    if (!orderKey) {
-      return res.status(404).json({ error: "Đơn hàng không tồn tại" });
-    }
-
-    const orderRef = database.ref(`Orders/${orderKey}`);
-    await orderRef.update({ status_confirm: true });
-
-    res.json({ message: "Cập nhật status_confirm thành công" });
-  } catch (error) {
-    console.error("Lỗi khi cập nhật:", error);
-    res.status(500).json({ error: "Lỗi khi cập nhật trạng thái" });
-  }
-};
-
-//cập nhật status
+//cập nhật status_order
 export const updateStatus = async (req, res) => {
   try {
-    const { id_order } = req.body;
+    const { id_order, status_order } = req.body;
 
-    if (!id_order) {
-      return res.status(400).json({ error: "Thiếu id_order" });
+    if (!id_order || !status_order) {
+      return res.status(400).json({ error: "Thiếu id_order hoặc status_order" });
     }
 
     const ordersRef = database.ref("Orders");
@@ -192,36 +152,70 @@ export const updateStatus = async (req, res) => {
     }
 
     const orderRef = database.ref(`Orders/${orderKey}`);
-    await orderRef.update({ status_order: true });
+    await orderRef.update({ status_order });
 
-    res.json({ message: "Cập nhật status_orders thành công" });
+    res.json({ message: `Cập nhật trạng thái đơn hàng thành ${status_order} thành công` });
   } catch (error) {
     console.error("Lỗi khi cập nhật:", error);
     res.status(500).json({ error: "Lỗi khi cập nhật trạng thái" });
   }
 };
 
-// export const deleteRequest = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     if (!id) {
-//       return res.status(400).json({ error: "Thiếu ID danh mục" });
-//     }
 
-//     const requestRef = database.ref(`Account/${id}`);
-//     const snapshot = await requestRef.once("value");
+//hàm xóa order và orderitem
+export const deleteRequest = async (req, res) => {
+  try {
+    const { id } = req.params; // Firebase key của đơn hàng trong bảng Orders
 
-//     if (!snapshot.exists()) {
-//       return res.status(404).json({ error: "Danh mục không tồn tại" });
-//     }
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID đơn hàng (key)" });
+    }
 
-//     await requestRef.remove();
-//     res.status(200).json({ message: "Danh mục đã được xóa" });
-//   } catch (error) {
-//     console.error("Lỗi khi xóa danh mục:", error);
-//     res.status(500).json({ error: "Lỗi khi xóa danh mục" });
-//   }
-// };
+    // Bước 1: Lấy đơn hàng để truy xuất id_order
+    const orderRef = database.ref(`Orders/${id}`);
+    const orderSnapshot = await orderRef.once("value");
+
+    if (!orderSnapshot.exists()) {
+      return res.status(404).json({ error: "Đơn hàng không tồn tại" });
+    }
+
+    const orderData = orderSnapshot.val();
+    const { id_order } = orderData;
+
+    if (!id_order) {
+      return res.status(400).json({ error: "Đơn hàng không có id_order để liên kết xóa" });
+    }
+
+    // Bước 2: Xóa đơn hàng trong bảng Orders
+    await orderRef.remove();
+
+    // Bước 3: Duyệt bảng OrderItems và xóa những item có id_order trùng
+    const orderItemsRef = database.ref("OrderItems");
+    const itemsSnapshot = await orderItemsRef.once("value");
+
+    if (itemsSnapshot.exists()) {
+      const items = itemsSnapshot.val();
+      const deletions = [];
+
+      Object.keys(items).forEach((itemKey) => {
+        if (items[itemKey].id_order === id_order) {
+          deletions.push(database.ref(`OrderItems/${itemKey}`).remove());
+        }
+      });
+
+      await Promise.all(deletions);
+    }
+
+    res.status(200).json({
+      message: `Đã xóa đơn hàng ${id_order} và các món ăn liên quan thành công`
+    });
+  } catch (error) {
+    console.error("Lỗi khi xóa đơn hàng và item:", error);
+    res.status(500).json({ error: "Lỗi khi xóa đơn hàng" });
+  }
+};
+
+
 
 // // Cập nhật giao dịch
 // export const updateRequest = async (req, res) => {
