@@ -166,5 +166,35 @@ export const updateTableByIdTable = async (req, res) => {
   }
 };
 
+export const softRestaurantRequests = async (req, res) => {
+  const {restaurant_id} = req.body;
+
+  try {
+    const requestRef = database.ref("Tables");
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const tables = snapshot.val();
+    const filteredMenus = [];
+
+    // Lọc các menu theo điều kiện
+    for (const key in tables) {
+      const table = tables[key];
+      if (
+        table.restaurant_id === restaurant_id 
+      ) {
+        filteredMenus.push({ id: key, ...table });
+      }
+    }
+
+    res.json(filteredMenus);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
 
 
