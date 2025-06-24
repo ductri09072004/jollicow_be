@@ -156,3 +156,26 @@ export const updateRequest = async (req, res) => {
   }
 };
 
+// Lấy món theo ID
+export const getMenuById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID món ăn" });
+    }
+
+    const menuRef = database.ref(`Menus/${id}`);
+    const snapshot = await menuRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Món ăn không tồn tại" });
+    }
+
+    const menuItem = snapshot.val();
+    res.status(200).json({ id, ...menuItem });
+  } catch (error) {
+    console.error("Lỗi khi lấy món ăn theo ID:", error);
+    res.status(500).json({ error: "Lỗi server khi lấy món ăn" });
+  }
+};
