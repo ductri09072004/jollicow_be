@@ -50,7 +50,6 @@ export const softRequests = async (req, res) => {
   }
 };
 
-
 // thêm danh sách
 export const addRequest = async (req, res) => {
   try {
@@ -91,7 +90,6 @@ export const addRequest = async (req, res) => {
     res.status(500).json({ error: "Lỗi khi thêm món ăn" });
   }
 };
-
 
 // xóa danh sách
 export const deleteRequest = async (req, res) => {
@@ -177,5 +175,106 @@ export const getMenuById = async (req, res) => {
   } catch (error) {
     console.error("Lỗi khi lấy món ăn theo ID:", error);
     res.status(500).json({ error: "Lỗi server khi lấy món ăn" });
+  }
+};
+
+//lọc theo id_restaurant ra 1 cụm 3 bảng
+export const softbyRes3in1Requests = async (req, res) => {
+  const { restaurant_id } = req.body;
+
+  try {
+    const menuRef = database.ref("Menus");
+    const categoryRef = database.ref("Categories");
+    const toppingRef = database.ref("Topping");
+
+    const [menuSnap, categorySnap, toppingSnap] = await Promise.all([
+      menuRef.once("value"),
+      categoryRef.once("value"),
+      toppingRef.once("value")
+    ]);
+
+    if (!menuSnap.exists() || !categorySnap.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const menus = menuSnap.val();
+    const categories = categorySnap.val();
+    const toppings = toppingSnap.exists() ? toppingSnap.val() : {};
+
+    const filteredMenus = [];
+
+    for (const key in menus) {
+      const menu = menus[key];
+
+      if (menu.restaurant_id === restaurant_id) {
+        // 🔹 Tìm tên danh mục
+        let categoryName = "Không rõ";
+        for (const catKey in categories) {
+          const category = categories[catKey];
+          if (category.id_category === menu.id_category) {
+            categoryName = category.name;
+            break;
+          }
+        }
+
+        // 🔹 Tìm các topping liên quan (chỉ lấy name_details và options)
+        const relatedToppings = [];
+        for (const topKey in toppings) {
+          const topping = toppings[topKey];
+          if (topping.id_dishes === menu.id_dishes) {
+            relatedToppings.push({
+              name_details: topping.name_details,
+              options: topping.options
+            });
+          }
+        }
+
+        filteredMenus.push({
+          id: key,
+          ...menu,
+          category_name: categoryName,
+          toppings: relatedToppings
+        });
+      }
+    }
+
+    res.json(filteredMenus);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
+
+
+//lọc theo id_restaurant
+export const softbyResRequests = async (req, res) => {
+  const { restaurant_id } = req.body;
+
+  try {
+    const requestRef = database.ref("Menus");
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const menus = snapshot.val();
+    const filteredMenus = [];
+
+    // Lọc các menu theo điều kiện
+    for (const key in menus) {
+      const menu = menus[key];
+      if (
+        // menu.restaurant_id === restaurant_id &&
+        menu.restaurant_id === restaurant_id
+      ) {
+        filteredMenus.push({ id: key, ...menu });
+      }
+    }
+
+    res.json(filteredMenus);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
   }
 };
