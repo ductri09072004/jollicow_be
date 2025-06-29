@@ -215,30 +215,121 @@ export const deleteRequest = async (req, res) => {
   }
 };
 
+//loc để từ đơn lấy ra món, sl, topping, ghi chú
+export const filter3in1Requests = async (req, res) => {
+  try {
+    const { id_restaurant, status_order } = req.body;
+
+    if (!id_restaurant || !status_order) {
+      return res.status(400).json({ error: "Thiếu id_restaurant hoặc status_order trong body" });
+    }
+
+    // Lấy Orders
+    const ordersSnapshot = await database.ref("Orders").once("value");
+    if (!ordersSnapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu Orders" });
+    }
+    const allOrders = ordersSnapshot.val();
+
+    const filteredOrders = {};
+
+    for (const key of Object.keys(allOrders)) {
+      const order = allOrders[key];
+      if (
+        order.id_restaurant === id_restaurant &&
+        order.status_order === status_order
+      ) {
+        filteredOrders[key] = {
+          status_order: order.status_order || "",
+          id_table: order.id_table || "",
+          date_create: order.date_create || "",
+          id_order: order.id_order,
+          items: []
+        };
+      }
+    }
+
+    if (Object.keys(filteredOrders).length === 0) {
+      return res.status(200).json({});
+    }
+
+    // Lấy OrderItems
+    const orderItemsSnapshot = await database.ref("OrderItems").once("value");
+    const allItems = orderItemsSnapshot.exists() ? orderItemsSnapshot.val() : {};
+
+    // Lấy Menus
+    const menusSnapshot = await database.ref("Menus").once("value");
+    const allMenus = menusSnapshot.exists() ? menusSnapshot.val() : {};
+
+    const dishNameMap = {};
+    for (const menuKey in allMenus) {
+      const menuItem = allMenus[menuKey];
+      if (menuItem.id_dishes && menuItem.name) {
+        dishNameMap[menuItem.id_dishes] = menuItem.name;
+      }
+    }
+
+    // Lấy Topping và tạo map từ id_option → name
+    const toppingSnapshot = await database.ref("Topping").once("value");
+    const allToppings = toppingSnapshot.exists() ? toppingSnapshot.val() : {};
+
+    const toppingOptionMap = {}; // id_option -> name
+    for (const toppingId in allToppings) {
+      const topping = allToppings[toppingId];
+      if (Array.isArray(topping.options)) {
+        topping.options.forEach(option => {
+          if (option.id_option && option.name) {
+            toppingOptionMap[option.id_option] = option.name;
+          }
+        });
+      }
+    }
+
+    // Gắn items vào từng order, thay id_dishes và id_topping bằng tên
+  // Gắn items vào từng order, thay id_dishes và id_topping bằng tên (nhiều topping)
+for (const itemKey of Object.keys(allItems)) {
+  const item = allItems[itemKey];
+  for (const orderKey of Object.keys(filteredOrders)) {
+    if (filteredOrders[orderKey].id_order === item.id_order) {
+      // Nếu id_topping là mảng → chuyển từng id_option thành tên topping
+      let toppingNames = [];
+
+      if (Array.isArray(item.id_topping)) {
+        toppingNames = item.id_topping.map(
+          (id) => toppingOptionMap[id] || id
+        );
+      } else if (typeof item.id_topping === "string") {
+        // Trường hợp chỉ có 1 topping dạng string
+        toppingNames = [toppingOptionMap[item.id_topping] || item.id_topping];
+      }
+
+      filteredOrders[orderKey].items.push({
+        name_topping: toppingNames,
+        note: item.note || "",
+        quantity: item.quantity || 0,
+        id_dishes: dishNameMap[item.id_dishes] || item.id_dishes || ""
+      });
+    }
+  }
+}
 
 
-// // Cập nhật giao dịch
-// export const updateRequest = async (req, res) => {
-//     try {
-//       const { id } = req.params;
-//       const updatedData = req.body;
-  
-//       if (!id) {
-//         return res.status(400).json({ error: "Thiếu ID giao dịch" });
-//       }
-  
-//       const requestRef = database.ref(`Account/${id}`);
-//       const snapshot = await requestRef.once("value");
-  
-//       if (!snapshot.exists()) {
-//         return res.status(404).json({ error: "Giao dịch không tồn tại" });
-//       }
-  
-//       await requestRef.update(updatedData);
-//       res.status(200).json({ message: "Giao dịch đã được cập nhật" });
-//     } catch (error) {
-//       console.error("Lỗi khi cập nhật giao dịch:", error);
-//       res.status(500).json({ error: "Lỗi khi cập nhật giao dịch" });
-//     }
-//   };
+    // Xoá id_order nội bộ
+    for (const key of Object.keys(filteredOrders)) {
+      delete filteredOrders[key].id_order;
+    }
+
+    res.json(filteredOrders);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
+
+
+
+
+
+
+
   

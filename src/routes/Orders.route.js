@@ -1,5 +1,5 @@
 import express from "express";
-import { getRequests,addRequest,fillerbyResRequests,filterByStatusRequests,updateStatus,deleteRequest} from "../controllers/Orders.controller.js";
+import { getRequests,addRequest,fillerbyResRequests,filterByStatusRequests,updateStatus,deleteRequest,filter3in1Requests} from "../controllers/Orders.controller.js";
 
 const router = express.Router();
 
@@ -9,6 +9,7 @@ router.post("/orders/fillerid", fillerbyResRequests);
 router.post("/orders/fillerstatus", filterByStatusRequests);
 router.put("/orders/update_status", updateStatus);
 router.delete("/orders/deleteall/:id", deleteRequest);
+router.post("/orders/filler3in1",filter3in1Requests );
 
 // Xuất theo chuẩn ES Module
 export default router;
