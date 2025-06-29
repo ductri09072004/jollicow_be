@@ -12,5 +12,5 @@ router.post("/menus/byid/:id", getMenuById);
 router.post("/menus/byres3in1", softbyRes3in1Requests);
 router.post("/menus/byres", softbyResRequests);
 
-// Xuất theo chuẩn ES Module
+
 export default router;
