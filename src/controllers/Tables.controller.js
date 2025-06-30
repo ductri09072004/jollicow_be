@@ -86,18 +86,34 @@ export const softAllRequests = async (req, res) => {
 //thêm danh sách bàn
 export const addRequest = async (req, res) => {
   try {
-    const { 
-      id_table,
-      restaurant_id } = req.body;
+    const { id_table, restaurant_id } = req.body;
 
-    if ( !id_table|| !restaurant_id) {
+    if (!id_table || !restaurant_id) {
       return res.status(400).json({ error: "Thiếu thông tin bàn" });
     }
 
-    const requestRef = database.ref("Tables").push();
+    const tablesRef = database.ref("Tables");
+    const snapshot = await tablesRef.once("value");
+    const tables = snapshot.val() || {};
+
+    // 🔍 Kiểm tra xem trong cùng restaurant_id đã có id_table chưa
+    const isDuplicate = Object.values(tables).some(
+      (table) =>
+        table.restaurant_id === restaurant_id &&
+        table.id_table === id_table
+    );
+
+    if (isDuplicate) {
+      return res.status(409).json({
+        error: "Bàn đã tồn tại trong nhà hàng này",
+      });
+    }
+
+    // ✅ Thêm bàn nếu không trùng
+    const requestRef = tablesRef.push();
     await requestRef.set({
       id_table,
-      restaurant_id
+      restaurant_id,
     });
 
     res.status(201).json({ message: "Bàn đã được thêm", id: requestRef.key });
@@ -106,6 +122,7 @@ export const addRequest = async (req, res) => {
     res.status(500).json({ error: "Lỗi khi thêm bàn" });
   }
 };
+
 
 // xóa danh sách
 export const deleteRequest = async (req, res) => {
@@ -131,7 +148,7 @@ export const deleteRequest = async (req, res) => {
 };
 
 
-// Cập nhật giao dịch
+// Cập nhật bàn
 export const updateTableByIdTable = async (req, res) => {
   try {
     const { id_table, id_newtable, restaurant_id } = req.body;
