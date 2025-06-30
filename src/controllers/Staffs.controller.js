@@ -89,7 +89,14 @@ function generateRandomId() {
 }
 export const addRequest = async (req, res) => {
   try {
-    const { name, password_hash, phone, restaurant_id, status } = req.body;
+    const {
+      name,
+      password_hash,
+      phone,
+      restaurant_id,
+      status,
+      role = "admin", 
+    } = req.body;
 
     if (!name || !password_hash || !phone) {
       return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
@@ -101,23 +108,28 @@ export const addRequest = async (req, res) => {
     const snapshot = await staffsRef.once("value");
     const staffs = snapshot.val() || {};
 
-    const phoneExists = Object.values(staffs).some(staff => staff.phone === phone);
+    const phoneExists = Object.values(staffs).some(
+      (staff) => staff.phone === phone
+    );
     if (phoneExists) {
       return res.status(409).json({ error: "Số điện thoại đã tồn tại" });
     }
+
     if (!validatePasswordStrength(password_hash)) {
       return res.status(400).json({
-        error: "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ cái, số và ký tự đặc biệt",
+        error:
+          "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ cái, số và ký tự đặc biệt",
       });
     }
-    
 
     // 🔁 Tạo id_staff mới và kiểm tra trùng
     let id_staff;
     let isDuplicate = true;
     do {
       id_staff = generateRandomId();
-      isDuplicate = Object.values(staffs).some(staff => staff.id_staff === id_staff);
+      isDuplicate = Object.values(staffs).some(
+        (staff) => staff.id_staff === id_staff
+      );
     } while (isDuplicate);
 
     // 🔒 Mã hóa mật khẩu
@@ -136,6 +148,7 @@ export const addRequest = async (req, res) => {
       phone,
       restaurant_id: restaurant_id || "",
       status: status || "active",
+      role, // 👈 thêm role ở đây
     });
 
     res.status(201).json({ message: "Tài khoản đã được thêm", id, id_staff });
@@ -147,15 +160,11 @@ export const addRequest = async (req, res) => {
 
 //forget pass
 export const resetPassword = async (req, res) => {
-  const { phone, newPassword, confirmPassword } = req.body;
+  const { phone, oldPassword, newPassword } = req.body;
 
   // 🔒 Kiểm tra đầu vào
-  if (!phone || !newPassword || !confirmPassword) {
+  if (!phone || !oldPassword || !newPassword) {
     return res.status(400).json({ error: "Vui lòng nhập đầy đủ thông tin" });
-  }
-
-  if (newPassword !== confirmPassword) {
-    return res.status(400).json({ error: "Mật khẩu xác nhận không khớp" });
   }
 
   if (!validatePasswordStrength(newPassword)) {
@@ -163,7 +172,6 @@ export const resetPassword = async (req, res) => {
       error: "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ cái, số và ký tự đặc biệt",
     });
   }
-  
 
   try {
     const staffsRef = database.ref("Staffs");
@@ -175,17 +183,31 @@ export const resetPassword = async (req, res) => {
 
     const staffs = snapshot.val();
     let staffKeyToUpdate = null;
+    let staffData = null;
 
     // 🔍 Tìm nhân viên theo số điện thoại
     for (const key of Object.keys(staffs)) {
       if (staffs[key].phone === phone) {
         staffKeyToUpdate = key;
+        staffData = staffs[key];
         break;
       }
     }
 
     if (!staffKeyToUpdate) {
       return res.status(404).json({ error: "Số điện thoại không tồn tại" });
+    }
+
+    // 🧪 So sánh mật khẩu cũ
+    const isOldPasswordCorrect = await bcrypt.compare(oldPassword, staffData.password_hash);
+    if (!isOldPasswordCorrect) {
+      return res.status(401).json({ error: "Mật khẩu cũ không đúng" });
+    }
+
+    // 🔄 Kiểm tra nếu mật khẩu mới giống mật khẩu cũ
+    const isSameAsOld = await bcrypt.compare(newPassword, staffData.password_hash);
+    if (isSameAsOld) {
+      return res.status(400).json({ error: "Mật khẩu mới không được trùng với mật khẩu cũ" });
     }
 
     // 🔐 Mã hóa mật khẩu mới
@@ -202,6 +224,7 @@ export const resetPassword = async (req, res) => {
     return res.status(500).json({ error: "Lỗi máy chủ" });
   }
 };
+
 
 export const deleteAccount = async (req, res) => {
   const { phone } = req.body;
