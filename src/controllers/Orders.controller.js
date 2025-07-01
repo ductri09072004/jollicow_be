@@ -313,12 +313,6 @@ for (const itemKey of Object.keys(allItems)) {
   }
 }
 
-
-    // Xoá id_order nội bộ
-    for (const key of Object.keys(filteredOrders)) {
-      delete filteredOrders[key].id_order;
-    }
-
     res.json(filteredOrders);
   } catch (error) {
     console.error("Lỗi khi lấy dữ liệu:", error);
