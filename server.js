@@ -10,6 +10,7 @@ import restaurantsRoutes from "./src/routes/Restaurants.route.js";
 import tablesRoutes from "./src/routes/Tables.route.js";
 import cartsRoutes from "./src/routes/Carts.route.js";
 import toppingsRoutes from "./src/routes/Topping.route.js";
+import notifisRoutes from "./src/routes/Notifi.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 6000;
@@ -28,6 +29,7 @@ app.use("/api", tablesRoutes);
 app.use("/api", orderitemsRoutes);
 app.use("/api", cartsRoutes);
 app.use("/api", toppingsRoutes);
+app.use("/api", notifisRoutes);
 
 // Start server
 app.listen(PORT, () => {

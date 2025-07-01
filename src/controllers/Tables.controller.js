@@ -182,6 +182,7 @@ export const updateTableByIdTable = async (req, res) => {
   }
 };
 
+//lọc theo res
 export const softRestaurantRequests = async (req, res) => {
   const {restaurant_id} = req.body;
 
