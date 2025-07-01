@@ -53,22 +53,69 @@ export const createTopping = async (req, res) => {
       return res.status(400).json({ error: "Dữ liệu không hợp lệ" });
     }
 
-    const newTopping = buildToppingObject(id_dishes, name_details, options);
-
     const toppingRef = database.ref("Topping");
-    const newToppingRef = toppingRef.push(); // Tạo key mới ngẫu nhiên
-    await newToppingRef.set(newTopping);
+    const snapshot = await toppingRef.once("value");
+    const toppings = snapshot.val() || {};
 
-    res.status(201).json({
-      message: "Tạo topping thành công",
-      id: newToppingRef.key,
-      topping: newTopping,
-    });
+    let existingKey = null;
+    let existingTopping = null;
+
+    // 🔍 Tìm item đã tồn tại với cùng id_dishes và name_details
+    for (const key in toppings) {
+      const topping = toppings[key];
+      if (topping.id_dishes === id_dishes && topping.name_details === name_details) {
+        existingKey = key;
+        existingTopping = topping;
+        break;
+      }
+    }
+
+    if (existingKey && existingTopping) {
+      // ✅ Đã tồn tại → sinh id_option mới và thêm vào options
+      const currentOptions = existingTopping.options || [];
+      const id_topping = existingTopping.id_topping;
+
+      let counter = currentOptions.length;
+
+      const newOptions = options.map((opt) => {
+        counter++;
+        return {
+          id_option: `${id_topping}_${counter}`,
+          name: opt.name,
+          price: opt.price,
+        };
+      });
+
+      const updatedOptions = [...currentOptions, ...newOptions];
+
+      // Cập nhật lại trong DB
+      await toppingRef.child(existingKey).update({ options: updatedOptions });
+
+      return res.status(200).json({
+        message: "Đã thêm option vào topping hiện có",
+        id: existingKey,
+        addedOptions: newOptions,
+        updatedOptions,
+      });
+    } else {
+      // ❌ Không tồn tại → tạo mới bằng buildToppingObject như cũ
+      const newTopping = buildToppingObject(id_dishes, name_details, options);
+      const newToppingRef = toppingRef.push();
+      await newToppingRef.set(newTopping);
+
+      return res.status(201).json({
+        message: "Tạo topping mới thành công",
+        id: newToppingRef.key,
+        topping: newTopping,
+      });
+    }
   } catch (error) {
     console.error("Lỗi khi tạo topping:", error);
     res.status(500).json({ error: "Lỗi server khi tạo topping" });
   }
 };
+
+
 
 // Lọc topping theo id_dishes (POST)
 export const filterToppingsByDishId = async (req, res) => {
