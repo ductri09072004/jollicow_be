@@ -327,6 +327,40 @@ for (const itemKey of Object.keys(allItems)) {
 };
 
 
+//lọc theo res+status(confirmed và closed)
+export const softByResDoneRequests = async (req, res) => {
+  const { id_category } = req.body;
+
+  try {
+    const requestRef = database.ref("Orders");
+    const snapshot = await requestRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu" });
+    }
+
+    const menus = snapshot.val();
+    const filteredMenus = [];
+
+    // Lọc các menu theo id_category và status_order phù hợp
+    for (const key in menus) {
+      const menu = menus[key];
+      if (
+        menu.id_category === id_category &&
+        (menu.status_order === "confirmed" || menu.status_order === "closed" || menu.status_order === "cancelled")
+      ) {
+        filteredMenus.push({ id: key, ...menu });
+      }
+    }
+
+    res.json(filteredMenus);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
+
+
 
 
 

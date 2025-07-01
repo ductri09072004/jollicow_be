@@ -1,5 +1,7 @@
 import express from "express";
-import { getRequests, softRequests,addRequest,deleteRequest,updateRequest,getMenuById,softbyRes3in1Requests,softbyResRequests} from "../controllers/Menus.controller.js";
+import { getRequests, softRequests,addRequest,deleteRequest,
+    updateRequest,getMenuById,softbyRes3in1Requests,softbyResRequests
+} from "../controllers/Menus.controller.js";
 
 const router = express.Router();
 

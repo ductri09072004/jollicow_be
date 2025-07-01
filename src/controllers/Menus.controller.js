@@ -245,7 +245,6 @@ export const softbyRes3in1Requests = async (req, res) => {
   }
 };
 
-
 //lọc theo id_restaurant
 export const softbyResRequests = async (req, res) => {
   const { restaurant_id } = req.body;
@@ -278,3 +277,6 @@ export const softbyResRequests = async (req, res) => {
     res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
   }
 };
+
+
+
