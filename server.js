@@ -17,6 +17,9 @@ import ipFilter from "./src/middleware/ipFilter.js";
 const app = express();
 const PORT = process.env.PORT || 6000;
 
+// Cấu hình trust proxy cho Railway
+app.set('trust proxy', true);
+
 // Middleware kiểm tra IP
 app.use(ipFilter);
 
