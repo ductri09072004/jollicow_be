@@ -17,8 +17,10 @@ const ipFilter = async (req, res, next) => {
   try {
     const snapshot = await database.ref("Restaurants").once("value");
     const restaurants = snapshot.val();
-    // Chuẩn hóa tất cả IP trong DB
-    const allowedIPs = Object.values(restaurants || {}).map(r => (r.ip_wifi || '').trim());
+    // Chuẩn hóa tất cả IP trong DB và loại bỏ IP rỗng
+    const allowedIPs = Object.values(restaurants || {})
+      .map(r => (r.ip_wifi || '').trim())
+      .filter(ip => ip);
     console.log('Allowed IPs:', allowedIPs);
 
     if (allowedIPs.includes(clientIP) || clientIP === '::1') {
