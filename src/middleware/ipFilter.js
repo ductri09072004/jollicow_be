@@ -1,7 +1,12 @@
 import { database } from "../data/firebaseConfig.js";
 
 const ipFilter = async (req, res, next) => {
-  let clientIP = req.headers['x-forwarded-for'] || req.ip || req.connection.remoteAddress;
+  // Thử lấy IP từ nhiều header khác nhau
+  let clientIP = req.headers['x-forwarded-for'] || 
+                 req.headers['x-real-ip'] || 
+                 req.headers['cf-connecting-ip'] ||
+                 req.ip || 
+                 req.connection.remoteAddress;
   
   // Nếu x-forwarded-for có nhiều IP, lấy IP đầu tiên
   if (clientIP && clientIP.includes(',')) {
@@ -14,6 +19,8 @@ const ipFilter = async (req, res, next) => {
   
   console.log('Client IP:', clientIP);
   console.log('X-Forwarded-For:', req.headers['x-forwarded-for']);
+  console.log('X-Real-IP:', req.headers['x-real-ip']);
+  console.log('CF-Connecting-IP:', req.headers['cf-connecting-ip']);
   console.log('Real IP:', req.ip);
 
   try {
