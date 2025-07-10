@@ -12,7 +12,6 @@ import cartsRoutes from "./src/routes/Carts.route.js";
 import toppingsRoutes from "./src/routes/Topping.route.js";
 import notifisRoutes from "./src/routes/Notifi.route.js";
 import promotionsRoutes from "./src/routes/Promotions.route.js";
-import ipFilter from "./src/middleware/ipFilter.js";
 import roleFilter from "./src/middleware/roleFilter.js";
 
 const app = express();
