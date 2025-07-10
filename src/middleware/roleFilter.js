@@ -11,6 +11,12 @@ const roleFilter = (req, res, next) => {
   console.log('Starts with /admin:', req.path.startsWith('/admin'));
   console.log('Includes /admin:', req.path.includes('/admin'));
   
+  // Bỏ qua OPTIONS requests (CORS preflight)
+  if (req.method === 'OPTIONS') {
+    console.log('✅ Bỏ qua OPTIONS request (CORS preflight)');
+    return next();
+  }
+  
   // Bỏ qua kiểm tra IP cho routes admin (web nhân viên)
   if (req.path.includes('/admin')) {
     console.log('✅ Bỏ qua kiểm tra IP cho admin route');
