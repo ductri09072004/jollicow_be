@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 6000;
 app.set('trust proxy', true);
 
 // Middleware phân biệt role và kiểm tra IP
-app.use(roleFilter);
+// app.use(roleFilter);
 
 // Middleware
 app.use(cors());
