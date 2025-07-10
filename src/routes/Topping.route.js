@@ -5,6 +5,7 @@ import { getToppings,createTopping,
 
 const router = express.Router();
 
+//client
 router.get("/toppings", getToppings);
 router.post("/toppings", createTopping);
 router.post("/toppings/filter", filterToppingsByDishId);
@@ -13,5 +14,13 @@ router.put("/toppings/namedetail/:id", updateNameDetailRequest);
 router.delete("/toppings/option/:id", deleteOptionRequest);
 router.put("/toppings/option/:id", updateOptionRequest);
 
+//admin
+router.get("/admin/toppings", getToppings);
+router.post("/admin/toppings", createTopping);
+router.post("/admin/toppings/filter", filterToppingsByDishId);
+router.delete("/admin/toppings/:id", deleteRequest);
+router.put("/admin/toppings/namedetail/:id", updateNameDetailRequest);
+router.delete("/admin/toppings/option/:id", deleteOptionRequest);
+router.put("/admin/toppings/option/:id", updateOptionRequest);
 // Xuất theo chuẩn ES Module
 export default router;

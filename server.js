@@ -13,6 +13,7 @@ import toppingsRoutes from "./src/routes/Topping.route.js";
 import notifisRoutes from "./src/routes/Notifi.route.js";
 import promotionsRoutes from "./src/routes/Promotions.route.js";
 import ipFilter from "./src/middleware/ipFilter.js";
+import roleFilter from "./src/middleware/roleFilter.js";
 
 const app = express();
 const PORT = process.env.PORT || 6000;
@@ -20,15 +21,17 @@ const PORT = process.env.PORT || 6000;
 // Cấu hình trust proxy cho Railway
 app.set('trust proxy', true);
 
-// Middleware kiểm tra IP
-app.use(ipFilter);
+// Middleware phân biệt role và kiểm tra IP
+app.use(roleFilter);
 
 // Middleware
 app.use(cors());
 app.use(json());
 
-// Routes
+// Routes Staffs (không có middleware kiểm tra IP)
 app.use("/api", staffsRoutes);
+
+// Routes khác (có middleware kiểm tra IP)
 app.use("/api", categoriesRoutes);
 app.use("/api", menusRoutes);
 app.use("/api", ordersRoutes);
