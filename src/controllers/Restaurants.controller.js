@@ -161,3 +161,39 @@ export const updateIPRequest = async (req, res) => {
   }
 };
 
+//lọc IP theo res
+export const getIPByRestaurantId = async (req, res) => {
+  try {
+    const { id_restaurant } = req.body;
+
+    if (!id_restaurant) {
+      return res.status(400).json({ error: "Thiếu id_restaurant trong body" });
+    }
+
+    const restaurantsRef = database.ref("Restaurants");
+    const snapshot = await restaurantsRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có nhà hàng nào trong hệ thống" });
+    }
+
+    let ip_wifi = null;
+
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      if (data.id_restaurant === id_restaurant) {
+        ip_wifi = data.ip_wifi || null;
+      }
+    });
+
+    if (!ip_wifi) {
+      return res.status(404).json({ error: "Không tìm thấy ip_wifi cho id_restaurant đã cho" });
+    }
+
+    res.status(200).json({ ip_wifi });
+  } catch (error) {
+    console.error("Lỗi khi lấy ip_wifi:", error);
+    res.status(500).json({ error: "Đã xảy ra lỗi khi lấy ip_wifi" });
+  }
+};
+
