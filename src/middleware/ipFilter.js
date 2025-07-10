@@ -17,6 +17,10 @@ const ipFilter = async (req, res, next) => {
     clientIP = clientIP.replace('::ffff:', '');
   }
   
+  console.log('=== IP FILTER DEBUG ===');
+  console.log('User-Agent:', req.headers['user-agent']);
+  console.log('Origin:', req.headers['origin']);
+  console.log('Referer:', req.headers['referer']);
   console.log('Client IP:', clientIP);
   console.log('X-Forwarded-For:', req.headers['x-forwarded-for']);
   console.log('X-Real-IP:', req.headers['x-real-ip']);
@@ -28,9 +32,17 @@ const ipFilter = async (req, res, next) => {
     const restaurants = snapshot.val();
     const allowedIPs = Object.values(restaurants || {}).map(r => r.ip_wifi);
     
+    console.log('=== IP CHECK DEBUG ===');
+    console.log('Allowed IPs from DB:', allowedIPs);
+    console.log('Client IP:', clientIP);
+    console.log('Is IP allowed:', allowedIPs.includes(clientIP));
+    console.log('IP type check:', typeof clientIP, typeof allowedIPs[0]);
+    
     if (allowedIPs.includes(clientIP) || clientIP === '::1') {
+      console.log('✅ IP allowed, proceeding...');
       next();
     } else {
+      console.log('❌ IP not allowed, blocking...');
       res.status(403).json({ error: 'Access denied: Your IP is not allowed.' });
     }
   } catch (error) {
