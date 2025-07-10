@@ -58,7 +58,7 @@ export const addRequest = async (req, res) => {
 };
 
 
-// // xóa danh sách
+//xóa danh sách
 export const deleteRequest = async (req, res) => {
   try {
     const { id } = req.params;
@@ -81,7 +81,7 @@ export const deleteRequest = async (req, res) => {
   }
 };
 
-// // Cập nhật giao dịch
+//Cập nhật giao dịch
 export const updateRequest = async (req, res) => {
   try {
     const { id } = req.params;
@@ -121,4 +121,43 @@ export const updateRequest = async (req, res) => {
   }
 };
 
-  
+
+//Cập nhật IP_Wifi
+export const updateIPRequest = async (req, res) => {
+  try {
+    const { id_restaurant, ip_wifi } = req.body;
+
+    if (!id_restaurant || !ip_wifi) {
+      return res.status(400).json({ error: "Thiếu id_restaurant hoặc ip_wifi trong body" });
+    }
+
+    const restaurantsRef = database.ref("Restaurants");
+    const snapshot = await restaurantsRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có nhà hàng nào trong hệ thống" });
+    }
+
+    let matchedKey = null;
+
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      if (data.id_restaurant === id_restaurant) {
+        matchedKey = childSnapshot.key;
+      }
+    });
+
+    if (!matchedKey) {
+      return res.status(404).json({ error: "Không tìm thấy nhà hàng với id_restaurant tương ứng" });
+    }
+
+    const updateRef = database.ref(`Restaurants/${matchedKey}`);
+    await updateRef.update({ ip_wifi });
+
+    res.status(200).json({ message: "Cập nhật ip_wifi thành công" });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật ip_wifi:", error);
+    res.status(500).json({ error: "Đã xảy ra lỗi khi cập nhật ip_wifi" });
+  }
+};
+
