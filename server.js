@@ -23,8 +23,36 @@ app.set('trust proxy', true);
 // Middleware phân biệt role và kiểm tra IP
 app.use(roleFilter);
 
-// Middleware
-app.use(cors());
+// Cấu hình CORS cho 2 tài khoản Railway
+app.use(cors({
+  origin: function (origin, callback) {
+    // Cho phép requests không có origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'https://employee-production-a7ec.up.railway.app',           // BE Railway
+      'https://jollicow.up.railway.app/', // FE Railway    // FE Railway (nếu có)                    // Local development
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'X-Forwarded-For',
+    'X-Real-IP',
+    'CF-Connecting-IP'
+  ]
+}));
+
 app.use(json());
 
 // Routes Staffs (không có middleware kiểm tra IP)
