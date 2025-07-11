@@ -29,9 +29,18 @@ app.use(cors({
     // Cho phép requests không có origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
+    console.log('Request origin:', origin); // Log để debug
+    
+    // Tạm thời cho phép tất cả origins để test
+    callback(null, true);
+    
+    // Sau khi biết domain thực tế, uncomment phần dưới
+    /*
     const allowedOrigins = [
-      'https://employee-production-a7ec.up.railway.app',           // BE Railway
-      'https://jollicow.up.railway.app/', // FE Railway    // FE Railway (nếu có)                    // Local development
+      'https://employee-production-a7ec.up.railway.app',  // BE Railway
+      'https://jollicow.up.railway.app',                  // FE Railway
+      'http://localhost:3000',                            // Local development
+      'http://localhost:5173'                             // Local development
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -40,6 +49,7 @@ app.use(cors({
       console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
+    */
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
