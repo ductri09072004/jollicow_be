@@ -23,6 +23,7 @@ app.set('trust proxy', 'loopback'); // Tin tưởng loopback addresses
 app.set('trust proxy', 'linklocal'); // Tin tưởng link-local addresses
 app.set('trust proxy', 'uniquelocal'); // Tin tưởng unique local addresses
 
+app.use(roleFilter);
 // Cấu hình CORS chi tiết cho Railway
 app.use(cors({
   origin: function (origin, callback) {
@@ -60,7 +61,7 @@ app.use(json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware phân biệt role và kiểm tra IP
-app.use(roleFilter);
+
 
 // Routes Staffs (không có middleware kiểm tra IP)
 app.use("/api", staffsRoutes);
