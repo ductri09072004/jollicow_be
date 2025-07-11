@@ -20,45 +20,12 @@ const PORT = process.env.PORT || 6000;
 // Cấu hình trust proxy cho Railway
 app.set('trust proxy', true);
 
-// Cấu hình CORS chi tiết cho 2 tài khoản Railway
-app.use(cors({
-  origin: function (origin, callback) {
-    // Cho phép requests không có origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      'https://jollicow.up.railway.app',           // BE Railway
-      'https://jollicowfe-production.up.railway.app', // FE Railway
-      'https://jollicow-be.up.railway.app',        // BE Railway (nếu có)
-      'https://jollicow-fe.up.railway.app',        // FE Railway (nếu có)
-      'http://localhost:3000',                     // Local development
-      'http://localhost:5173'                      // Local development
-    ];
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'X-Forwarded-For',
-    'X-Real-IP',
-    'CF-Connecting-IP'
-  ]
-}));
-
-// Middleware cơ bản
-app.use(json());
-
-// Middleware phân biệt role và kiểm tra IP (SAU middleware cơ bản)
+// Middleware phân biệt role và kiểm tra IP
 app.use(roleFilter);
+
+// Middleware
+app.use(cors());
+app.use(json());
 
 // Routes Staffs (không có middleware kiểm tra IP)
 app.use("/api", staffsRoutes);
@@ -75,16 +42,7 @@ app.use("/api", toppingsRoutes);
 app.use("/api", notifisRoutes);
 app.use("/api", promotionsRoutes);
 
-// Error handling cho CORS
-app.use((err, req, res, next) => {
-  if (err.message === 'Not allowed by CORS') {
-    return res.status(403).json({ error: 'CORS: Origin not allowed' });
-  }
-  next(err);
-});
-
 // Start server
 app.listen(PORT, () => {
   console.log(`Server jollicow is running on http://localhost:${PORT}`);
-  console.log('CORS enabled for multiple Railway accounts');
 });
