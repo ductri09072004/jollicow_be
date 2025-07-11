@@ -17,22 +17,22 @@ import roleFilter from "./src/middleware/roleFilter.js";
 const app = express();
 const PORT = process.env.PORT || 6000;
 
-// Cấu hình trust proxy chi tiết cho Railway
-app.set('trust proxy', 1); // Tin tưởng 1 proxy level
-app.set('trust proxy', 'loopback'); // Tin tưởng loopback addresses
-app.set('trust proxy', 'linklocal'); // Tin tưởng link-local addresses
-app.set('trust proxy', 'uniquelocal'); // Tin tưởng unique local addresses
+// Cấu hình trust proxy cho Railway
+app.set('trust proxy', true);
 
-app.use(roleFilter);
-// Cấu hình CORS chi tiết cho Railway
+// Cấu hình CORS chi tiết cho 2 tài khoản Railway
 app.use(cors({
   origin: function (origin, callback) {
     // Cho phép requests không có origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
-      'https://jollicow.up.railway.app',
-      'https://jollicowfe-production.up.railway.app'
+      'https://jollicow.up.railway.app',           // BE Railway
+      'https://jollicowfe-production.up.railway.app', // FE Railway
+      'https://jollicow-be.up.railway.app',        // BE Railway (nếu có)
+      'https://jollicow-fe.up.railway.app',        // FE Railway (nếu có)
+      'http://localhost:3000',                     // Local development
+      'http://localhost:5173'                      // Local development
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -51,17 +51,14 @@ app.use(cors({
     'X-Forwarded-For',
     'X-Real-IP',
     'CF-Connecting-IP'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // Cache preflight for 24 hours
+  ]
 }));
 
-// Body parser middleware
-app.use(json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Middleware cơ bản
+app.use(json());
 
-// Middleware phân biệt role và kiểm tra IP
-
+// Middleware phân biệt role và kiểm tra IP (SAU middleware cơ bản)
+app.use(roleFilter);
 
 // Routes Staffs (không có middleware kiểm tra IP)
 app.use("/api", staffsRoutes);
@@ -78,23 +75,16 @@ app.use("/api", toppingsRoutes);
 app.use("/api", notifisRoutes);
 app.use("/api", promotionsRoutes);
 
-// Error handling middleware
+// Error handling cho CORS
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
   if (err.message === 'Not allowed by CORS') {
     return res.status(403).json({ error: 'CORS: Origin not allowed' });
   }
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  next(err);
 });
 
 // Start server
 app.listen(PORT, () => {
   console.log(`Server jollicow is running on http://localhost:${PORT}`);
-  console.log('Environment:', process.env.NODE_ENV || 'development');
-  console.log('Trust proxy enabled');
+  console.log('CORS enabled for multiple Railway accounts');
 });
