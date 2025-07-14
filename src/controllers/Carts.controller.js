@@ -140,12 +140,27 @@ export const filterCartsByTableAndRestaurant = async (req, res) => {
     const allCarts = snapshot.val();
     const filteredCarts = [];
 
+    // Đọc dữ liệu menu trước để tra cứu
+    const menusRef = database.ref("Menus");
+    const menusSnapshot = await menusRef.once("value");
+    const menus = menusSnapshot.exists() ? menusSnapshot.val() : {};
+
     Object.entries(allCarts).forEach(([key, cart]) => {
       if (
         cart.id_table === id_table &&
         cart.id_restaurant === id_restaurant
       ) {
-        filteredCarts.push({ id: key, ...cart });
+        const matchedMenu = Object.values(menus).find(
+          (menuItem) => menuItem.id_dishes === cart.id_dishes
+        );
+
+        const cartWithImage = {
+          id: key,
+          ...cart,
+          image: matchedMenu?.image || null,
+        };
+
+        filteredCarts.push(cartWithImage);
       }
     });
 
