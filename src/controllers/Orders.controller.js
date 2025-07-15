@@ -161,7 +161,6 @@ export const updateStatus = async (req, res) => {
   }
 };
 
-
 //hàm xóa order và orderitem
 export const deleteRequest = async (req, res) => {
   try {
@@ -320,7 +319,6 @@ for (const itemKey of Object.keys(allItems)) {
   }
 };
 
-
 //lọc theo res+status(confirmed và closed)
 export const softByResDoneRequests = async (req, res) => {
   const { id_category } = req.body;
@@ -353,6 +351,101 @@ export const softByResDoneRequests = async (req, res) => {
     res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
   }
 };
+
+//hàm tính tổng doanh thu theo tháng
+export const calculateMonthlyRevenueByRestaurant = async (req, res) => {
+  try {
+    const { id_restaurant } = req.body;
+
+    if (!id_restaurant) {
+      return res.status(400).json({ error: "Thiếu id_restaurant trong yêu cầu" });
+    }
+
+    const ordersRef = database.ref("Orders");
+    const snapshot = await ordersRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu đơn hàng" });
+    }
+
+    const orders = snapshot.val();
+    const monthlyRevenue = {};
+
+    Object.values(orders).forEach(order => {
+      const { id_restaurant: resId, total_price, date_create } = order;
+
+      if (!resId || resId !== id_restaurant || !total_price || !date_create) return;
+
+      const date = new Date(date_create);
+      if (isNaN(date)) return;
+
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+      if (!monthlyRevenue[monthKey]) {
+        monthlyRevenue[monthKey] = 0;
+      }
+
+      monthlyRevenue[monthKey] += total_price;
+    });
+
+    res.json({ id_restaurant, monthlyRevenue });
+  } catch (error) {
+    console.error("Lỗi khi tính doanh thu theo nhà hàng:", error);
+    res.status(500).json({ error: "Lỗi khi tính doanh thu" });
+  }
+};
+
+//đếm đơn
+export const countOrdersByStatus = async (req, res) => {
+  try {
+    const { id_restaurant } = req.body;
+
+    if (!id_restaurant) {
+      return res.status(400).json({ error: "Thiếu id_restaurant trong yêu cầu" });
+    }
+
+    const ordersRef = database.ref("Orders");
+    const snapshot = await ordersRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu đơn hàng" });
+    }
+
+    const orders = snapshot.val();
+
+    const counts = {
+      pending: 0,
+      preparing: 0,
+      confirmed: 0,
+      closed: 0,
+      cancelled: 0,
+      total: 0
+    };
+
+    Object.values(orders).forEach(order => {
+      const { id_restaurant: resId, status_order } = order;
+
+      if (resId === id_restaurant) {
+        counts.total++;
+
+        // Nếu status_order thuộc các trạng thái hợp lệ thì tăng
+        if (counts.hasOwnProperty(status_order)) {
+          counts[status_order]++;
+        }
+      }
+    });
+
+    res.json({
+      id_restaurant,
+      counts
+    });
+  } catch (error) {
+    console.error("Lỗi khi đếm đơn hàng theo trạng thái:", error);
+    res.status(500).json({ error: "Lỗi khi đếm đơn hàng" });
+  }
+};
+
+
 
 
 

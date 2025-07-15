@@ -17,7 +17,8 @@
 import express from "express";
 import {
   getRequests,
-  addRequest
+  addRequest,
+  countDishesQuantity
 } from "../controllers/OrderItems.controller.js";
 
 const router = express.Router();
@@ -26,6 +27,7 @@ const router = express.Router();
 const setupOrderItemsRoutes = (basePath, router) => {
   router.get(basePath, getRequests);
   router.post(basePath, addRequest);
+  router.post(`${basePath}/count-dishes`, countDishesQuantity);
 };
 
 // Gọi cho cả client và admin

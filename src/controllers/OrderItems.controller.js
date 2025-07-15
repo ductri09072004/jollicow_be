@@ -51,30 +51,123 @@ export const addRequest = async (req, res) => {
   }
 };
 
-
-
-// // Cập nhật giao dịch
-// export const updateRequest = async (req, res) => {
-//     try {
-//       const { id } = req.params;
-//       const updatedData = req.body;
-  
-//       if (!id) {
-//         return res.status(400).json({ error: "Thiếu ID giao dịch" });
-//       }
-  
-//       const requestRef = database.ref(`Account/${id}`);
-//       const snapshot = await requestRef.once("value");
-  
-//       if (!snapshot.exists()) {
-//         return res.status(404).json({ error: "Giao dịch không tồn tại" });
-//       }
-  
-//       await requestRef.update(updatedData);
-//       res.status(200).json({ message: "Giao dịch đã được cập nhật" });
-//     } catch (error) {
-//       console.error("Lỗi khi cập nhật giao dịch:", error);
-//       res.status(500).json({ error: "Lỗi khi cập nhật giao dịch" });
+//thống kê món
+// export const countDishesQuantity = async (req, res) => {
+//   try {
+//     // Lấy dữ liệu từ OrderItems
+//     const orderItemsSnap = await database.ref("OrderItems").once("value");
+//     if (!orderItemsSnap.exists()) {
+//       return res.status(404).json({ error: "Không có dữ liệu OrderItems" });
 //     }
-//   };
-  
+
+//     // Lấy dữ liệu từ Menus để ánh xạ id_dishes -> name
+//     const menusSnap = await database.ref("Menus").once("value");
+//     if (!menusSnap.exists()) {
+//       return res.status(404).json({ error: "Không có dữ liệu Menus" });
+//     }
+
+//     const orderItems = orderItemsSnap.val();
+//     const menus = menusSnap.val();
+
+//     // Map id_dishes -> name
+//     const dishNameMap = {};
+//     Object.values(menus).forEach(menu => {
+//       if (menu.id_dishes && menu.name) {
+//         dishNameMap[menu.id_dishes] = menu.name;
+//       }
+//     });
+
+//     // Đếm tổng quantity theo name
+//     const dishCounts = {};
+//     Object.values(orderItems).forEach(item => {
+//       const { id_dishes, quantity } = item;
+
+//       if (!id_dishes || typeof quantity !== "number") return;
+
+//       const name = dishNameMap[id_dishes] || `Không rõ (${id_dishes})`;
+
+//       if (!dishCounts[name]) {
+//         dishCounts[name] = 0;
+//       }
+
+//       dishCounts[name] += quantity;
+//     });
+
+//     res.json({
+//       message: "Tổng số lượng món ăn theo tên món",
+//       counts: dishCounts
+//     });
+//   } catch (error) {
+//     console.error("Lỗi khi đếm món theo tên:", error);
+//     res.status(500).json({ error: "Lỗi khi đếm món theo tên" });
+//   }
+// };
+
+
+export const countDishesQuantity = async (req, res) => {
+  try {
+    const { id_restaurant } = req.body;
+
+    if (!id_restaurant) {
+      return res.status(400).json({ error: "Thiếu id_restaurant trong yêu cầu" });
+    }
+
+    // Lấy dữ liệu
+    const [orderItemsSnap, menusSnap, ordersSnap] = await Promise.all([
+      database.ref("OrderItems").once("value"),
+      database.ref("Menus").once("value"),
+      database.ref("Orders").once("value")
+    ]);
+
+    if (!orderItemsSnap.exists() || !menusSnap.exists() || !ordersSnap.exists()) {
+      return res.status(404).json({ error: "Thiếu dữ liệu từ OrderItems, Menus hoặc Orders" });
+    }
+
+    const orderItems = orderItemsSnap.val();
+    const menus = menusSnap.val();
+    const orders = ordersSnap.val();
+
+    // Map: id_dishes => name
+    const dishNameMap = {};
+    Object.values(menus).forEach(menu => {
+      if (menu.id_dishes && menu.name) {
+        dishNameMap[menu.id_dishes] = menu.name;
+      }
+    });
+
+    // Map: id_order => id_restaurant
+    const orderRestaurantMap = {};
+    Object.values(orders).forEach(order => {
+      if (order.id_order && order.id_restaurant) {
+        orderRestaurantMap[order.id_order] = order.id_restaurant;
+      }
+    });
+
+    // Đếm quantity theo tên món, chỉ khi đơn hàng thuộc nhà hàng được yêu cầu
+    const dishCounts = {};
+    Object.values(orderItems).forEach(item => {
+      const { id_order, id_dishes, quantity } = item;
+
+      const resId = orderRestaurantMap[id_order];
+      if (!id_dishes || typeof quantity !== "number" || resId !== id_restaurant) return;
+
+      const name = dishNameMap[id_dishes] || `Không rõ (${id_dishes})`;
+
+      if (!dishCounts[name]) {
+        dishCounts[name] = 0;
+      }
+
+      dishCounts[name] += quantity;
+    });
+
+    res.json({
+      id_restaurant,
+      message: "Tổng số lượng món ăn theo tên món",
+      counts: dishCounts
+    });
+  } catch (error) {
+    console.error("Lỗi khi đếm món theo nhà hàng:", error);
+    res.status(500).json({ error: "Lỗi khi đếm món theo nhà hàng" });
+  }
+};
+
