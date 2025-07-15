@@ -174,7 +174,7 @@ export const filterCartsByTableAndRestaurant = async (req, res) => {
 //thêm nâng cao order
 export const createOrderFromCart = async (req, res) => {
   try {
-    const { id_restaurant, id_table, payment = "Chưa thanh toán" } = req.body;
+    const { id_restaurant, id_table, id_promotion = null, payment = "Chưa thanh toán" } = req.body;
 
     if (!id_restaurant || !id_table) {
       return res.status(400).json({ error: "Thiếu id_restaurant hoặc id_table" });
@@ -189,17 +189,15 @@ export const createOrderFromCart = async (req, res) => {
     }
 
     const allCartItems = cartSnapshot.val();
-
-    // Lọc ra những món của bàn cụ thể trong nhà hàng
     const filteredItems = [];
-    let total_price = 0;
+    let default_price = 0;
 
     Object.keys(allCartItems).forEach((key) => {
       const item = allCartItems[key];
       if (item.id_restaurant === id_restaurant && item.id_table === id_table) {
-        item._key = key; // lưu lại key để xóa cart sau nếu cần
+        item._key = key;
         filteredItems.push(item);
-        total_price += item.price * item.quantity;
+        default_price += item.price * item.quantity;
       }
     });
 
@@ -207,25 +205,80 @@ export const createOrderFromCart = async (req, res) => {
       return res.status(400).json({ error: "Không tìm thấy món nào trong Cart phù hợp" });
     }
 
-    // Tạo id_order ngẫu nhiên: OR + 1 chữ cái + 4 số
-    const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
-    const randomNum = Math.floor(1000 + Math.random() * 9000); // 1000 - 9999
+    // Tính giảm giá nếu có promotion
+    let discount = 0;
+
+    if (id_promotion) {
+      const promotionsRef = database.ref("Promotions");
+      const promoSnap = await promotionsRef.once("value");
+
+      if (!promoSnap.exists()) {
+        return res.status(404).json({ error: "Không có bảng Promotions" });
+      }
+
+      const promotions = promoSnap.val();
+      let matchedPromotion = null;
+
+      for (const key in promotions) {
+        if (promotions[key].id_promotion === id_promotion) {
+          matchedPromotion = promotions[key];
+          break;
+        }
+      }
+
+      if (!matchedPromotion) {
+        return res.status(404).json({ error: "Không tìm thấy khuyến mãi phù hợp" });
+      }
+
+      const {
+        percent,
+        max_discount,
+        min_order_value,
+        status,
+        quantity
+      } = matchedPromotion;
+
+      if (status !== "active") {
+        return res.status(400).json({ error: "Promotion không còn hoạt động" });
+      }
+
+      if (quantity === 0) {
+        return res.status(400).json({ error: "Promotion đã hết lượt sử dụng" });
+      }
+
+      if (default_price < min_order_value) {
+        return res.status(400).json({
+          error: `Đơn hàng chưa đủ điều kiện áp dụng khuyến mãi (≥ ${min_order_value.toLocaleString("vi-VN")}₫)`
+        });
+      }
+
+      discount = Math.min((default_price * percent) / 100, max_discount);
+    }
+
+    const total_price = Math.floor(default_price - discount);
+
+    // Tạo mã order
+    const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
     const id_order = `OR${randomChar}${randomNum}`;
 
-    // Thêm vào bảng Orders
+    // Lưu vào bảng Orders
     const newOrderRef = database.ref("Orders").push();
     const orderData = {
       id_order,
       id_restaurant,
       id_table,
+      default_price,
+      discount,
       total_price,
       payment,
       status_order: "pending",
+      id_promotion: id_promotion || "",
       date_create: new Date().toISOString()
     };
     await newOrderRef.set(orderData);
 
-    // Thêm từng món vào OrderItems
+    // Lưu vào OrderItems
     const orderItemsRef = database.ref("OrderItems");
     const addItemsPromises = filteredItems.map((item) => {
       const newItemRef = orderItemsRef.push();
@@ -241,16 +294,18 @@ export const createOrderFromCart = async (req, res) => {
 
     await Promise.all(addItemsPromises);
 
-    // (Tùy chọn) Xoá các cart đã sử dụng
-    const deleteCartPromises = filteredItems.map((item) => {
-      return database.ref(`Carts/${item._key}`).remove();
-    });
+    // Xóa cart đã sử dụng
+    const deleteCartPromises = filteredItems.map((item) =>
+      database.ref(`Carts/${item._key}`).remove()
+    );
 
     await Promise.all(deleteCartPromises);
 
     res.status(201).json({
       message: "Tạo đơn hàng thành công",
       id_order,
+      default_price,
+      discount,
       total_price,
       items_count: filteredItems.length
     });
@@ -259,4 +314,5 @@ export const createOrderFromCart = async (req, res) => {
     res.status(500).json({ error: "Lỗi khi tạo đơn hàng" });
   }
 };
+
 
