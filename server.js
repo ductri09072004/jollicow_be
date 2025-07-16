@@ -17,11 +17,11 @@ import roleFilter from "./src/middleware/roleFilter.js";
 const app = express();
 const PORT = process.env.PORT || 6000;
 
-// Cấu hình trust proxy cho Railway
-app.set('trust proxy', true);
+// // Cấu hình trust proxy cho Railway
+// app.set('trust proxy', true);
 
-// Middleware phân biệt role và kiểm tra IP
-app.use(roleFilter);
+// // Middleware phân biệt role và kiểm tra IP
+// app.use(roleFilter);
 
 // Middleware
 app.use(cors());
