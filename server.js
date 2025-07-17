@@ -24,8 +24,13 @@ app.set('trust proxy', true);
 app.use(roleFilter);
 
 // Middleware
-app.use(cors());
-
+app.use(cors({
+  origin: [
+    "https://jollicow-client-production.up.railway.app",
+    "https://employee-joliicow.up.railway.app"
+  ],
+  credentials: true,
+}));
 
 app.use(json());
 
