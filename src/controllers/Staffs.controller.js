@@ -94,7 +94,7 @@ export const addRequest = async (req, res) => {
       password_hash,
       phone,
       restaurant_id,
-      status,
+      status ="inactive",
       role = "admin", 
     } = req.body;
 
