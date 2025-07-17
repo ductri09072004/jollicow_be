@@ -24,7 +24,10 @@ app.set('trust proxy', true);
 app.use(roleFilter);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "https://jollicow-client-production.up.railway.app",
+  credentials: true,
+}));
 app.use(json());
 
 // Routes Staffs (không có middleware kiểm tra IP)
