@@ -24,7 +24,21 @@ app.set('trust proxy', true);
 app.use(roleFilter);
 
 // Middleware
-app.use(cors());
+// app.use(cors());
+
+const allowedOrigins = ['https://jollicow-client-production.up.railway.app'];
+app.use(cors({
+  origin: function (origin, callback) {
+    // Cho phép gọi từ Postman hoặc script không có origin
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  },
+  credentials: true  // nếu bạn dùng cookie hoặc token
+}));
+
 app.use(json());
 
 // Routes Staffs (không có middleware kiểm tra IP)
