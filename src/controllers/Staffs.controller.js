@@ -45,6 +45,13 @@ export const authenticateUser = async (req, res) => {
       const staff = staffs[key];
 
       if (staff.phone === phone) {
+        // Kiểm tra trạng thái tài khoản
+        if (staff.status === 'inactive') {
+          return res.status(403).json({
+            success: false,
+            message: "Tài khoản đã chưa được duyệt hoặc bị khóa",
+          });
+        }
         const match = await bcrypt.compare(password_hash, staff.password_hash);
         if (match) {
           isAuthenticated = true;
