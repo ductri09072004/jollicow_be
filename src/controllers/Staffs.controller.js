@@ -232,7 +232,7 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-
+//xóa acc
 export const deleteAccount = async (req, res) => {
   const { phone } = req.body;
 
@@ -273,6 +273,7 @@ export const deleteAccount = async (req, res) => {
   }
 };
 
+//cập nhật id_restaurant
 export const addIDResRequest = async (req, res) => {
   try {
     const { id_staff, restaurant_id } = req.body;
@@ -309,6 +310,71 @@ export const addIDResRequest = async (req, res) => {
   }
 };
 
+//Sửa acc
+export const putStaffRequest = async (req, res) => {
+  try {
+    const { id_staff, name, status } = req.body;
+
+    if (!id_staff) {
+      return res.status(400).json({ error: "Thiếu id_staff" });
+    }
+
+    const tableRef = database.ref("Staffs");
+    const snapshot = await tableRef.once("value");
+    const data = snapshot.val();
+
+    let updated = false;
+
+    for (const key in data) {
+      const staff = data[key];
+      if (staff.id_staff === id_staff) {
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (status !== undefined) updateData.status = status;
+
+        await tableRef.child(key).update(updateData);
+        updated = true;
+        break; // Dừng sau khi cập nhật nhân viên
+      }
+    }
+
+    if (updated) {
+      res.status(200).json({ message: `Đã cập nhật nhân viên ${id_staff}` });
+    } else {
+      res.status(404).json({ error: `Không tìm thấy nhân viên có id_staff = ${id_staff}` });
+    }
+  } catch (error) {
+    console.error("Lỗi khi cập nhật nhân viên:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi cập nhật nhân viên" });
+  }
+};
+
+//get acc inactive
+export const getInactiveStaffs = async (req, res) => {
+  try {
+    const tableRef = database.ref("Staffs");
+    const snapshot = await tableRef.once("value");
+    const data = snapshot.val();
+
+    const inactiveStaffs = [];
+
+    for (const key in data) {
+      const staff = data[key];
+      if (staff.status === "inactive") {
+        inactiveStaffs.push({
+          id_staff: staff.id_staff,
+          name: staff.name,
+          status: staff.status
+        });
+      }
+    }
+
+    res.status(200).json(inactiveStaffs);
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách nhân viên inactive:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách nhân viên inactive" });
+  }
+};
 
 
 
