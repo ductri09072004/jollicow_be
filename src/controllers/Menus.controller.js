@@ -58,11 +58,12 @@ export const addRequest = async (req, res) => {
       image,
       name,
       price,
-      restaurant_id
+      restaurant_id,
+      status
     } = req.body;
 
     // Kiểm tra các trường bắt buộc (bỏ qua id_dishes và status vì tự sinh)
-    if (!id_category || !name || !price || !restaurant_id) {
+    if (!id_category || !name || !price || !restaurant_id ||!status) {
       return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
     }
 
@@ -71,13 +72,11 @@ export const addRequest = async (req, res) => {
     const randomNumber = Math.floor(1000 + Math.random() * 9000); // 4 chữ số
     const id_dishes = `ME${randomChar}${randomNumber}`;
 
-    const status = true; // Luôn true
-
     const requestRef = database.ref("Menus").push();
     await requestRef.set({
       id_category,
       id_dishes,
-      image: image || "", // Nếu không có thì để rỗng
+      image: image || "", 
       name,
       price,
       restaurant_id,
