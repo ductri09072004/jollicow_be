@@ -44,7 +44,7 @@ const setupStaffRoutes = (basePath, router) => {
   router.post(`${basePath}/reset`, resetPassword);
   router.post(`${basePath}/delete`, deleteAccount);
   router.post(`${basePath}/addID`, addIDResRequest);
-  router.post(`${basePath}/putAcc`, putStaffRequest);
+  // router.post(`${basePath}/putAcc`, putStaffRequest);
   router.get(`${basePath}/getInactive`, getInactiveStaffs);
 };
 
