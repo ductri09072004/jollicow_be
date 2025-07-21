@@ -44,8 +44,7 @@ const setupStaffRoutes = (basePath, router) => {
   router.post(`${basePath}/reset`, resetPassword);
   router.post(`${basePath}/delete`, deleteAccount);
   router.post(`${basePath}/addID`, addIDResRequest);
-  // Sửa POST thành PUT cho đúng với chức năng cập nhật
-  router.put(`${basePath}/fixStatus`, fixStaffStatus);
+  router.put(`${basePath}/fixStatus/:id`, fixStaffStatus);
   router.get(`${basePath}/getInactive`, getInactiveStaffs);
 };
 
