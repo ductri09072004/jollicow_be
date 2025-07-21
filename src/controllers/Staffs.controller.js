@@ -361,11 +361,7 @@ export const getInactiveStaffs = async (req, res) => {
     for (const key in data) {
       const staff = data[key];
       if (staff.status === "inactive") {
-        inactiveStaffs.push({
-          id_staff: staff.id_staff,
-          name: staff.name,
-          status: staff.status
-        });
+        inactiveStaffs.push(staff); // Thêm toàn bộ object
       }
     }
 
@@ -375,6 +371,7 @@ export const getInactiveStaffs = async (req, res) => {
     res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách nhân viên inactive" });
   }
 };
+
 
 
 
