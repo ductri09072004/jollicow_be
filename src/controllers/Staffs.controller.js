@@ -311,7 +311,7 @@ export const addIDResRequest = async (req, res) => {
 };
 
 //Sửa acc
-export const putStaffRequest = async (req, res) => {
+export const fixStaffStatus = async (req, res) => {
   try {
     const { id_staff, name, status } = req.body;
 

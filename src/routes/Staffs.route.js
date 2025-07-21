@@ -31,7 +31,7 @@ import {
   deleteAccount,
   addIDResRequest,
   getInactiveStaffs,
-  putStaffRequest
+  fixStaffStatus
 } from "../controllers/Staffs.controller.js";
 
 const router = express.Router();
@@ -45,7 +45,7 @@ const setupStaffRoutes = (basePath, router) => {
   router.post(`${basePath}/delete`, deleteAccount);
   router.post(`${basePath}/addID`, addIDResRequest);
   // Sửa POST thành PUT cho đúng với chức năng cập nhật
-  router.put(`${basePath}/putAcc`, putStaffRequest);
+  router.put(`${basePath}/fixStatus`, fixStaffStatus);
   router.get(`${basePath}/getInactive`, getInactiveStaffs);
 };
 
