@@ -356,12 +356,12 @@ export const getInactiveStaffs = async (req, res) => {
     const snapshot = await tableRef.once("value");
     const data = snapshot.val();
 
-    const inactiveStaffs = [];
+    const inactiveStaffs = {};
 
     for (const key in data) {
       const staff = data[key];
       if (staff.status === "inactive") {
-        inactiveStaffs.push(staff); // Thêm toàn bộ object
+        inactiveStaffs[key] = staff; // ✅ gán vào object với key là id gốc
       }
     }
 
@@ -371,6 +371,7 @@ export const getInactiveStaffs = async (req, res) => {
     res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách nhân viên inactive" });
   }
 };
+
 
 //xóa acc + restaurant
 export const deleteAccResRequest = async (req, res) => {
