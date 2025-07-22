@@ -1,18 +1,4 @@
-// import express from "express";
-// import { getRequests,getPromotionsByRestaurant} from "../controllers/Promotions.controller.js";
 
-// const router = express.Router();
-
-// //client
-// router.get("/promotions", getRequests);
-// router.post("/promotions", getPromotionsByRestaurant);
-
-// //admin
-// router.get("/admin/promotions", getRequests);
-// router.post("/admin/promotions", getPromotionsByRestaurant);
-
-// // Xuất theo chuẩn ES Module
-// export default router;
 
 import express from "express";
 import {
