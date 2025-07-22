@@ -13,7 +13,7 @@ import toppingsRoutes from "./src/routes/Topping.route.js";
 import notifisRoutes from "./src/routes/Notifi.route.js";
 import promotionsRoutes from "./src/routes/Promotions.route.js";
 import roleFilter from "./src/middleware/roleFilter.js";
-
+import trackRoutes from "./src/routes/Track.route.js";
 const app = express();
 const PORT = process.env.PORT || 6000;
 
@@ -42,7 +42,7 @@ app.use("/api", cartsRoutes);
 app.use("/api", toppingsRoutes);
 app.use("/api", notifisRoutes);
 app.use("/api", promotionsRoutes);
-
+app.use("/api", trackRoutes);
 // Start server
 app.listen(PORT, () => {
   console.log(`Server jollicow is running on http://localhost:${PORT}`);
