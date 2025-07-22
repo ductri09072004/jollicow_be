@@ -9,7 +9,8 @@ import {
   deleteAccount,
   addIDResRequest,
   getInactiveStaffs,
-  fixStaffStatus
+  fixStaffStatus,
+  deleteAccResRequest
 } from "../controllers/Staffs.controller.js";
 
 const router = express.Router();
@@ -24,6 +25,7 @@ const setupStaffRoutes = (basePath, router) => {
   router.post(`${basePath}/addID`, addIDResRequest);
   router.post(`${basePath}/fixStatus`, fixStaffStatus);
   router.get(`${basePath}/getInactive`, getInactiveStaffs);
+  router.delete(`${basePath}/:id`, deleteAccResRequest);
 };
 
 // Gọi cho cả client và admin

@@ -311,38 +311,6 @@ export const addIDResRequest = async (req, res) => {
 };
 
 //Sửa acc
-// export const fixStaffStatus = async (req, res) => {
-//   try {
-//     const { name, status } = req.body;
-//     const id = req.params.id; // ✅ Lấy id từ URL
-
-//     if (!id) {
-//       return res.status(400).json({ error: "Thiếu id trong URL" });
-//     }
-
-//     const updateData = {};
-//     if (name !== undefined) updateData.name = name;
-//     if (status !== undefined) updateData.status = status;
-
-//     if (Object.keys(updateData).length === 0) {
-//       return res.status(400).json({ error: "Không có trường nào để cập nhật" });
-//     }
-
-//     const staffRef = database.ref(`Staffs/${id}`);
-//     const snapshot = await staffRef.once("value");
-
-//     if (!snapshot.exists()) {
-//       return res.status(404).json({ error: `Không tìm thấy nhân viên với id = ${id}` });
-//     }
-
-//     await staffRef.update(updateData);
-
-//     res.status(200).json({ message: `Đã cập nhật nhân viên có id = ${id}` });
-//   } catch (error) {
-//     console.error("Lỗi khi cập nhật nhân viên:", error);
-//     res.status(500).json({ error: "Lỗi máy chủ khi cập nhật nhân viên" });
-//   }
-// };
 export const fixStaffStatus = async (req, res) => {
   try {
     const { id_staff, name, status } = req.body;
@@ -381,7 +349,6 @@ export const fixStaffStatus = async (req, res) => {
   }
 };
 
-
 //get acc inactive
 export const getInactiveStaffs = async (req, res) => {
   try {
@@ -402,6 +369,51 @@ export const getInactiveStaffs = async (req, res) => {
   } catch (error) {
     console.error("Lỗi khi lấy danh sách nhân viên inactive:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi lấy danh sách nhân viên inactive" });
+  }
+};
+
+//xóa acc + restaurant
+export const deleteAccResRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "Thiếu ID nhân viên" });
+    }
+
+    const staffRef = database.ref(`Staffs/${id}`);
+    const staffSnap = await staffRef.once("value");
+
+    if (!staffSnap.exists()) {
+      return res.status(404).json({ error: "Nhân viên không tồn tại" });
+    }
+
+    const staffData = staffSnap.val();
+    const staffRestaurantId = staffData.restaurant_id;
+
+    // Xóa nhân viên
+    await staffRef.remove();
+
+    // Tìm trong Restaurants nếu có id_restaurant trùng thì xóa
+    if (staffRestaurantId) {
+      const restaurantsRef = database.ref("Restaurants");
+      const restaurantSnap = await restaurantsRef.once("value");
+      const restaurants = restaurantSnap.val();
+
+      for (const key in restaurants) {
+        const restaurant = restaurants[key];
+        if (restaurant.id_restaurant === staffRestaurantId) {
+          await restaurantsRef.child(key).remove();
+          console.log(`Đã xóa nhà hàng có id_restaurant = ${staffRestaurantId}`);
+          break; // Dừng sau khi xóa
+        }
+      }
+    }
+
+    res.status(200).json({ message: "Đã xóa nhân viên và (nếu có) nhà hàng liên quan." });
+  } catch (error) {
+    console.error("Lỗi khi xóa nhân viên và nhà hàng:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi xóa nhân viên hoặc nhà hàng" });
   }
 };
 
