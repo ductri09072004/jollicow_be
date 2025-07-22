@@ -311,33 +311,70 @@ export const addIDResRequest = async (req, res) => {
 };
 
 //Sửa acc
+// export const fixStaffStatus = async (req, res) => {
+//   try {
+//     const { name, status } = req.body;
+//     const id = req.params.id; // ✅ Lấy id từ URL
+
+//     if (!id) {
+//       return res.status(400).json({ error: "Thiếu id trong URL" });
+//     }
+
+//     const updateData = {};
+//     if (name !== undefined) updateData.name = name;
+//     if (status !== undefined) updateData.status = status;
+
+//     if (Object.keys(updateData).length === 0) {
+//       return res.status(400).json({ error: "Không có trường nào để cập nhật" });
+//     }
+
+//     const staffRef = database.ref(`Staffs/${id}`);
+//     const snapshot = await staffRef.once("value");
+
+//     if (!snapshot.exists()) {
+//       return res.status(404).json({ error: `Không tìm thấy nhân viên với id = ${id}` });
+//     }
+
+//     await staffRef.update(updateData);
+
+//     res.status(200).json({ message: `Đã cập nhật nhân viên có id = ${id}` });
+//   } catch (error) {
+//     console.error("Lỗi khi cập nhật nhân viên:", error);
+//     res.status(500).json({ error: "Lỗi máy chủ khi cập nhật nhân viên" });
+//   }
+// };
 export const fixStaffStatus = async (req, res) => {
   try {
-    const { name, status } = req.body;
-    const id = req.params.id; // ✅ Lấy id từ URL
+    const { id_staff, name, status } = req.body;
 
-    if (!id) {
-      return res.status(400).json({ error: "Thiếu id trong URL" });
+    if (!id_staff) {
+      return res.status(400).json({ error: "Thiếu id_staff" });
     }
 
-    const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (status !== undefined) updateData.status = status;
+    const tableRef = database.ref("Staffs");
+    const snapshot = await tableRef.once("value");
+    const data = snapshot.val();
 
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({ error: "Không có trường nào để cập nhật" });
+    let updated = false;
+
+    for (const key in data) {
+      const staff = data[key];
+      if (staff.id_staff === id_staff) {
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (status !== undefined) updateData.status = status;
+
+        await tableRef.child(key).update(updateData);
+        updated = true;
+        break; // Dừng sau khi cập nhật nhân viên
+      }
     }
 
-    const staffRef = database.ref(`Staffs/${id}`);
-    const snapshot = await staffRef.once("value");
-
-    if (!snapshot.exists()) {
-      return res.status(404).json({ error: `Không tìm thấy nhân viên với id = ${id}` });
+    if (updated) {
+      res.status(200).json({ message: `Đã cập nhật nhân viên ${id_staff}` });
+    } else {
+      res.status(404).json({ error: `Không tìm thấy nhân viên có id_staff = ${id_staff}` });
     }
-
-    await staffRef.update(updateData);
-
-    res.status(200).json({ message: `Đã cập nhật nhân viên có id = ${id}` });
   } catch (error) {
     console.error("Lỗi khi cập nhật nhân viên:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi cập nhật nhân viên" });
