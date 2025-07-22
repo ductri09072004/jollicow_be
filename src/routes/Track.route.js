@@ -2,7 +2,8 @@
 import express from "express";
 import {
   getRequests,
-  increaseVisitCount
+  increaseVisitCount,
+  getTotalVisits
 } from "../controllers/Track.controller.js";
 
 const router = express.Router();
@@ -11,6 +12,7 @@ const router = express.Router();
 const setupTrackRoutes = (basePath, router) => {
   router.get(`${basePath}`, getRequests);
   router.post(`${basePath}/increase`, increaseVisitCount);
+  router.get(`${basePath}/total`, getTotalVisits);
 };
 
 // Khai báo route cho cả client và admin
