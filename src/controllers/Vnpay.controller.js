@@ -4,7 +4,7 @@ import crypto from 'crypto';
 const vnp_TmnCode = 'D0RFC8HZ';
 const vnp_HashSecret = 'CKNU5RUGONR9QM07YV7VF6O1ZVXM3NFW';
 const vnp_Url = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-const vnp_ReturnUrl = 'https://jollicowbe-admin.up.railway.app/vnpay_return';
+const vnp_ReturnUrl = 'https://jollicowbe-admin.up.railway.app/api/admin/pay/vnpay_return';
 
 function sortObject(obj) {
   const sorted = {};
