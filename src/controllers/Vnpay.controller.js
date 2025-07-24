@@ -36,7 +36,7 @@ function createPaymentUrl(req, res) {
     vnp_Locale: 'vn',
     vnp_CurrCode: 'VND',
     vnp_TxnRef: orderId.toString(),
-    vnp_OrderInfo: `Thanh toán đơn hàng bàn: ${req.body.id_table} - Mã nhà hàng: ${req.body.restaurant_id}`,
+    vnp_OrderInfo: `Thanh toán đơn hàng: ${req.body.id_order} - Bàn: ${req.body.id_table} - Mã nhà hàng: ${req.body.restaurant_id}`,
     vnp_OrderType: 'other',
     vnp_Amount: amount,
     vnp_ReturnUrl: returnUrl,
@@ -71,16 +71,40 @@ function vnpayReturnUrl(req, res) {
   if (secureHash === signed) {
     // Chữ ký hợp lệ
     if (vnp_Params.vnp_ResponseCode === '00') {
-      // Parse id_table và restaurant_id từ vnp_OrderInfo
+      // Parse id_order, id_table, restaurant_id từ vnp_OrderInfo
+      let id_order = '';
       let id_table = '';
       let restaurant_id = '';
       if (vnp_Params.vnp_OrderInfo) {
+        const matchOrder = vnp_Params.vnp_OrderInfo.match(/đơn hàng: ([^\s-]+)/);
+        if (matchOrder) id_order = matchOrder[1];
         const matchTable = vnp_Params.vnp_OrderInfo.match(/bàn: ([^\s-]+)/);
         if (matchTable) id_table = matchTable[1];
         const matchRes = vnp_Params.vnp_OrderInfo.match(/Mã nhà hàng: ([^\s]+)/);
         if (matchRes) restaurant_id = matchRes[1];
       }
       const backUrl = `http://jollicow.up.railway.app/menu/generate?id_table=${id_table}&restaurant_id=${restaurant_id}`;
+
+      // Cập nhật trạng thái payment trong database
+      import('../data/firebaseConfig.js').then(({ database }) => {
+        const ordersRef = database.ref('Orders');
+        ordersRef.once('value', snapshot => {
+          if (snapshot.exists()) {
+            const orders = snapshot.val();
+            let orderKey = null;
+            Object.keys(orders).forEach((key) => {
+              if (orders[key].id_order === id_order) {
+                orderKey = key;
+              }
+            });
+            if (orderKey) {
+              const orderRef = database.ref(`Orders/${orderKey}`);
+              orderRef.update({ payment: 'Đã thanh toán' });
+            }
+          }
+        });
+      });
+
       res.send(`
         <!DOCTYPE html>
         <html lang="vi">
@@ -103,6 +127,15 @@ function vnpayReturnUrl(req, res) {
         </html>
       `);
     } else {
+      let id_table = '';
+      let restaurant_id = '';
+      if (vnp_Params.vnp_OrderInfo) {
+        const matchTable = vnp_Params.vnp_OrderInfo.match(/bàn: ([^\s-]+)/);
+        if (matchTable) id_table = matchTable[1];
+        const matchRes = vnp_Params.vnp_OrderInfo.match(/Mã nhà hàng: ([^\s]+)/);
+        if (matchRes) restaurant_id = matchRes[1];
+      }
+      const backUrl = `http://jollicow.up.railway.app/menu/generate?id_table=${id_table}&restaurant_id=${restaurant_id}`;
       res.send(`
         <!DOCTYPE html>
         <html lang="vi">
@@ -117,7 +150,7 @@ function vnpayReturnUrl(req, res) {
             <div class="fail-icon">❌</div>
             <h2>Thanh toán thất bại!</h2>
             <div class="info">Mã lỗi: <b>${vnp_Params.vnp_ResponseCode}</b></div>
-            <a href="http://jollicow.up.railway.app/menu/generate?id_table=K20&restaurant_id=CHA1001" class="btn-home">Quay về trang chủ</a>
+            <a href="${backUrl}" class="btn-home">Quay về trang chủ</a>
           </div>
         </body>
         </html>
@@ -125,6 +158,16 @@ function vnpayReturnUrl(req, res) {
     }
   } else {
     // Sai chữ ký
+    // Tạo lại backUrl để dùng cho cả trường hợp sai chữ ký
+    let id_table = '';
+    let restaurant_id = '';
+    if (vnp_Params.vnp_OrderInfo) {
+      const matchTable = vnp_Params.vnp_OrderInfo.match(/bàn: ([^\s-]+)/);
+      if (matchTable) id_table = matchTable[1];
+      const matchRes = vnp_Params.vnp_OrderInfo.match(/Mã nhà hàng: ([^\s]+)/);
+      if (matchRes) restaurant_id = matchRes[1];
+    }
+    const backUrl = `http://jollicow.up.railway.app/menu/generate?id_table=${id_table}&restaurant_id=${restaurant_id}`;
     res.status(400).send(`
       <!DOCTYPE html>
       <html lang="vi">
@@ -138,7 +181,7 @@ function vnpayReturnUrl(req, res) {
         <div class="container">
           <div class="fail-icon">❌</div>
           <h2>Sai chữ ký! Giao dịch không hợp lệ.</h2>
-          <a href="http://jollicow.up.railway.app/menu/generate?id_table=K20&restaurant_id=CHA1001" class="btn-home">Quay về trang chủ</a>
+          <a href="${backUrl}" class="btn-home">Quay về trang chủ</a>
         </div>
       </body>
       </html>
