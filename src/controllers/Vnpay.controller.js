@@ -36,7 +36,7 @@ function createPaymentUrl(req, res) {
     vnp_Locale: 'vn',
     vnp_CurrCode: 'VND',
     vnp_TxnRef: orderId.toString(),
-    vnp_OrderInfo: 'Thanh toan don hang',
+    vnp_OrderInfo: `Thanh toán đơn hàng bàn: ${req.body.id_table} - Mã nhà hàng: ${req.body.restaurant_id}`,
     vnp_OrderType: 'other',
     vnp_Amount: amount,
     vnp_ReturnUrl: returnUrl,
@@ -71,6 +71,16 @@ function vnpayReturnUrl(req, res) {
   if (secureHash === signed) {
     // Chữ ký hợp lệ
     if (vnp_Params.vnp_ResponseCode === '00') {
+      // Parse id_table và restaurant_id từ vnp_OrderInfo
+      let id_table = '';
+      let restaurant_id = '';
+      if (vnp_Params.vnp_OrderInfo) {
+        const matchTable = vnp_Params.vnp_OrderInfo.match(/bàn: ([^\s-]+)/);
+        if (matchTable) id_table = matchTable[1];
+        const matchRes = vnp_Params.vnp_OrderInfo.match(/Mã nhà hàng: ([^\s]+)/);
+        if (matchRes) restaurant_id = matchRes[1];
+      }
+      const backUrl = `http://jollicow.up.railway.app/menu/generate?id_table=${id_table}&restaurant_id=${restaurant_id}`;
       res.send(`
         <!DOCTYPE html>
         <html lang="vi">
@@ -87,7 +97,7 @@ function vnpayReturnUrl(req, res) {
             <div class="info">Mã giao dịch: <b>${vnp_Params.vnp_TxnRef}</b></div>
             <div class="info">Số tiền: <b>${vnp_Params.vnp_Amount / 100} VND</b></div>
             <div class="info">Thông tin đơn hàng: <b>${vnp_Params.vnp_OrderInfo}</b></div>
-            <a href="http://jollicow.up.railway.app/" class="btn-home">Quay về trang chủ</a>
+            <a href="${backUrl}" class="btn-home">Quay về trang chủ</a>
           </div>
         </body>
         </html>
@@ -107,7 +117,7 @@ function vnpayReturnUrl(req, res) {
             <div class="fail-icon">❌</div>
             <h2>Thanh toán thất bại!</h2>
             <div class="info">Mã lỗi: <b>${vnp_Params.vnp_ResponseCode}</b></div>
-            <a href="http://jollicow.up.railway.app/" class="btn-home">Quay về trang chủ</a>
+            <a href="http://jollicow.up.railway.app/menu/generate?id_table=K20&restaurant_id=CHA1001" class="btn-home">Quay về trang chủ</a>
           </div>
         </body>
         </html>
@@ -128,7 +138,7 @@ function vnpayReturnUrl(req, res) {
         <div class="container">
           <div class="fail-icon">❌</div>
           <h2>Sai chữ ký! Giao dịch không hợp lệ.</h2>
-          <a href="http://jollicow.up.railway.app/" class="btn-home">Quay về trang chủ</a>
+          <a href="http://jollicow.up.railway.app/menu/generate?id_table=K20&restaurant_id=CHA1001" class="btn-home">Quay về trang chủ</a>
         </div>
       </body>
       </html>
