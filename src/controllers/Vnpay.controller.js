@@ -17,42 +17,66 @@ function sortObject(obj) {
 }
 
 function createPaymentUrl(req, res) {
-  const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  const tmnCode = vnp_TmnCode;
-  const secretKey = vnp_HashSecret;
-  const vnpUrl = vnp_Url;
-  const returnUrl = vnp_ReturnUrl;
+  const { id_order } = req.body;
+  if (!id_order) {
+    return res.status(400).json({ error: 'Thiếu id_order trong body' });
+  }
 
-  const date = new Date();
-  const createDate = date.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
-  const orderId = date.getTime();
+  import('../data/firebaseConfig.js').then(async ({ database }) => {
+    const ordersRef = database.ref('Orders');
+    const snapshot = await ordersRef.once('value');
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: 'Không có dữ liệu đơn hàng' });
+    }
+    const orders = snapshot.val();
+    let orderData = null;
+    Object.keys(orders).forEach((key) => {
+      if (orders[key].id_order === id_order) {
+        orderData = orders[key];
+      }
+    });
+    if (!orderData) {
+      return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+    }
+    // Lấy thông tin từ đơn hàng
+    const amount = orderData.total_price * 100;
+    const id_table = orderData.id_table;
+    const restaurant_id = orderData.id_restaurant;
 
-  const amount = req.body.amount * 100;
+    const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const tmnCode = vnp_TmnCode;
+    const secretKey = vnp_HashSecret;
+    const vnpUrl = vnp_Url;
+    const returnUrl = vnp_ReturnUrl;
 
-  let vnp_Params = {
-    vnp_Version: '2.1.0',
-    vnp_Command: 'pay',
-    vnp_TmnCode: tmnCode,
-    vnp_Locale: 'vn',
-    vnp_CurrCode: 'VND',
-    vnp_TxnRef: orderId.toString(),
-    vnp_OrderInfo: `Thanh toán đơn hàng: ${req.body.id_order} - Bàn: ${req.body.id_table} - Mã nhà hàng: ${req.body.restaurant_id}`,
-    vnp_OrderType: 'other',
-    vnp_Amount: amount,
-    vnp_ReturnUrl: returnUrl,
-    vnp_IpAddr: ipAddr,
-    vnp_CreateDate: createDate
-  };
+    const date = new Date();
+    const createDate = date.toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+    const orderId = date.getTime();
 
-  const sortedParams = sortObject(vnp_Params);
+    let vnp_Params = {
+      vnp_Version: '2.1.0',
+      vnp_Command: 'pay',
+      vnp_TmnCode: tmnCode,
+      vnp_Locale: 'vn',
+      vnp_CurrCode: 'VND',
+      vnp_TxnRef: orderId.toString(),
+      vnp_OrderInfo: `Thanh toán đơn hàng: ${id_order} - Bàn: ${id_table} - Mã nhà hàng: ${restaurant_id}`,
+      vnp_OrderType: 'other',
+      vnp_Amount: amount,
+      vnp_ReturnUrl: returnUrl,
+      vnp_IpAddr: ipAddr,
+      vnp_CreateDate: createDate
+    };
 
-  const signData = qs.stringify(sortedParams, { encode: false });
-  const hmac = crypto.createHmac('sha512', secretKey);
-  const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
-  vnp_Params.vnp_SecureHash = signed;
-  const paymentUrl = vnpUrl + '?' + qs.stringify(vnp_Params, { encode: true });
+    const sortedParams = sortObject(vnp_Params);
+    const signData = qs.stringify(sortedParams, { encode: false });
+    const hmac = crypto.createHmac('sha512', secretKey);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+    vnp_Params.vnp_SecureHash = signed;
+    const paymentUrl = vnpUrl + '?' + qs.stringify(vnp_Params, { encode: true });
 
-  res.json({ paymentUrl });
+    res.json({ paymentUrl });
+  });
 }
 
 
