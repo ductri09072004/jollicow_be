@@ -154,8 +154,8 @@ function vnpayReturnUrl(req, res) {
       let id_table = '';
       let restaurant_id = '';
       if (vnp_Params.vnp_OrderInfo) {
-        const matchTable = vnp_Params.vnp_OrderInfo.match(/bàn: ([^\s-]+)/);
-        if (matchTable) id_table = matchTable[1];
+        const matchTable = vnp_Params.vnp_OrderInfo.match(/Bàn: (.+?) -/i);
+        if (matchTable) id_table = matchTable[1].trim();
         const matchRes = vnp_Params.vnp_OrderInfo.match(/Mã nhà hàng: ([^\s]+)/);
         if (matchRes) restaurant_id = matchRes[1];
       }
@@ -186,8 +186,8 @@ function vnpayReturnUrl(req, res) {
     let id_table = '';
     let restaurant_id = '';
     if (vnp_Params.vnp_OrderInfo) {
-      const matchTable = vnp_Params.vnp_OrderInfo.match(/bàn: ([^\s-]+)/);
-      if (matchTable) id_table = matchTable[1];
+      const matchTable = vnp_Params.vnp_OrderInfo.match(/Bàn: (.+?) -/i);
+      if (matchTable) id_table = matchTable[1].trim();
       const matchRes = vnp_Params.vnp_OrderInfo.match(/Mã nhà hàng: ([^\s]+)/);
       if (matchRes) restaurant_id = matchRes[1];
     }
