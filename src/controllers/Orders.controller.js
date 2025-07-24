@@ -108,7 +108,8 @@ export const filterByStatusRequests = async (req, res) => {
 
       if (
         order.id_restaurant === id_restaurant &&
-        order.status_order === status_order
+        order.status_order === status_order &&
+        order.payment === 'Đã thanh toán'
       ) {
         filteredOrders[key] = order;
       }
