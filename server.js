@@ -1,5 +1,6 @@
 import express, { json } from "express";
 import cors from "cors";
+import path from "path";
 
 import staffsRoutes from "./src/routes/Staffs.route.js"; 
 import categoriesRoutes from "./src/routes/Categories.route.js";
@@ -18,6 +19,9 @@ import vnpayRoutes from "./src/routes/Vnpay.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 6000;
+
+// Phục vụ static cho thư mục public
+app.use(express.static("public"));
 
 // Cấu hình trust proxy cho Railway
 app.set('trust proxy', true);

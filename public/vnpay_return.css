@@ -1,0 +1,12 @@
+body { background: #f6f8fa; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+.container { max-width: 400px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 24px 18px 32px 18px; text-align: center; }
+.success-icon { font-size: 60px; color: #4caf50; margin-bottom: 12px; }
+.fail-icon { font-size: 60px; color: #f44336; margin-bottom: 12px; }
+h2 { color: #222; margin-bottom: 8px; }
+.info { color: #444; font-size: 16px; margin: 8px 0; }
+.btn-home { display: inline-block; margin-top: 24px; padding: 12px 32px; background: #4caf50; color: #fff; border: none; border-radius: 8px; font-size: 16px; text-decoration: none; box-shadow: 0 2px 8px rgba(76,175,80,0.08); transition: background 0.2s; }
+.btn-home:hover { background: #388e3c; }
+@media (max-width: 500px) {
+  .container { max-width: 98vw; padding: 16px 4vw 24px 4vw; }
+  .btn-home { width: 100%; font-size: 18px; padding: 14px 0; }
+} 

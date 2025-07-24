@@ -44,20 +44,12 @@ function createPaymentUrl(req, res) {
     vnp_CreateDate: createDate
   };
 
-  // Bước 1: Sắp xếp
   const sortedParams = sortObject(vnp_Params);
 
-  // Bước 2: Tạo chuỗi dữ liệu ký
   const signData = qs.stringify(sortedParams, { encode: false });
-
-  // Bước 3: Tạo chữ ký
   const hmac = crypto.createHmac('sha512', secretKey);
   const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
-
-  // Bước 4: Gán vào bản gốc
   vnp_Params.vnp_SecureHash = signed;
-
-  // Bước 5: Tạo URL thanh toán
   const paymentUrl = vnpUrl + '?' + qs.stringify(vnp_Params, { encode: true });
 
   res.json({ paymentUrl });
@@ -65,33 +57,82 @@ function createPaymentUrl(req, res) {
 
 
 function vnpayReturnUrl(req, res) {
-  // 1. Lấy tất cả tham số từ query
   const vnp_Params = { ...req.query };
   const secureHash = vnp_Params.vnp_SecureHash;
   delete vnp_Params.vnp_SecureHash;
 
-  // 2. Sắp xếp tham số
   const sortedParams = sortObject(vnp_Params);
-
-  // 3. Tạo chuỗi ký
   const signData = qs.stringify(sortedParams, { encode: false });
 
-  // 4. Tạo chữ ký mới
   const signed = crypto.createHmac('sha512', vnp_HashSecret)
     .update(Buffer.from(signData, 'utf-8'))
     .digest('hex');
 
-  // 5. So sánh
   if (secureHash === signed) {
     // Chữ ký hợp lệ
     if (vnp_Params.vnp_ResponseCode === '00') {
-      res.send(`<h2>Thanh toán thành công!</h2><p>Mã giao dịch: ${vnp_Params.vnp_TxnRef}</p><p>Số tiền: ${vnp_Params.vnp_Amount / 100} VND</p><p>Thông tin đơn hàng: ${vnp_Params.vnp_OrderInfo}</p>`);
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Thanh toán thành công</title>
+          <link rel="stylesheet" href="/vnpay_return.css">
+        </head>
+        <body>
+          <div class="container">
+            <div class="success-icon">✔️</div>
+            <h2>Thanh toán thành công!</h2>
+            <div class="info">Mã giao dịch: <b>${vnp_Params.vnp_TxnRef}</b></div>
+            <div class="info">Số tiền: <b>${vnp_Params.vnp_Amount / 100} VND</b></div>
+            <div class="info">Thông tin đơn hàng: <b>${vnp_Params.vnp_OrderInfo}</b></div>
+            <a href="http://jollicow.up.railway.app/" class="btn-home">Quay về trang chủ</a>
+          </div>
+        </body>
+        </html>
+      `);
     } else {
-      res.send(`<h2>Thanh toán thất bại!</h2><p>Mã lỗi: ${vnp_Params.vnp_ResponseCode}</p>`);
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Thanh toán thất bại</title>
+          <link rel="stylesheet" href="/vnpay_return.css">
+        </head>
+        <body>
+          <div class="container">
+            <div class="fail-icon">❌</div>
+            <h2>Thanh toán thất bại!</h2>
+            <div class="info">Mã lỗi: <b>${vnp_Params.vnp_ResponseCode}</b></div>
+            <a href="http://jollicow.up.railway.app/" class="btn-home">Quay về trang chủ</a>
+          </div>
+        </body>
+        </html>
+      `);
     }
   } else {
     // Sai chữ ký
-    res.status(400).send('Sai chữ ký! Giao dịch không hợp lệ.');
+    res.status(400).send(`
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sai chữ ký</title>
+        <link rel="stylesheet" href="/vnpay_return.css">
+      </head>
+      <body>
+        <div class="container">
+          <div class="fail-icon">❌</div>
+          <h2>Sai chữ ký! Giao dịch không hợp lệ.</h2>
+          <a href="http://jollicow.up.railway.app/" class="btn-home">Quay về trang chủ</a>
+        </div>
+      </body>
+      </html>
+    `);
   }
 }
 
