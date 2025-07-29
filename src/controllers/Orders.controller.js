@@ -322,7 +322,7 @@ for (const itemKey of Object.keys(allItems)) {
 
 //lọc theo res+status(confirmed và closed)
 export const softByResDoneRequests = async (req, res) => {
-  const { id_category } = req.body;
+  const { id_restaurant } = req.body;
 
   try {
     const requestRef = database.ref("Orders");
@@ -339,7 +339,7 @@ export const softByResDoneRequests = async (req, res) => {
     for (const key in menus) {
       const menu = menus[key];
       if (
-        menu.id_category === id_category &&
+        menu.id_restaurant === id_restaurant &&
         (menu.status_order === "confirmed" || menu.status_order === "closed" || menu.status_order === "cancelled")
       ) {
         filteredMenus.push({ id: key, ...menu });
