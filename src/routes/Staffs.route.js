@@ -10,7 +10,8 @@ import {
   addIDResRequest,
   getInactiveStaffs,
   fixStaffStatus,
-  deleteAccResRequest
+  deleteAccResRequest,
+  checkPhoneExistsAPI
 } from "../controllers/Staffs.controller.js";
 
 const router = express.Router();
@@ -25,6 +26,7 @@ const setupStaffRoutes = (basePath, router) => {
   router.post(`${basePath}/addID`, addIDResRequest);
   router.post(`${basePath}/fixStatus`, fixStaffStatus);
   router.get(`${basePath}/getInactive`, getInactiveStaffs);
+  router.get(`${basePath}/checkPhone/:phone`, checkPhoneExistsAPI);
   router.delete(`${basePath}/:id`, deleteAccResRequest);
 };
 

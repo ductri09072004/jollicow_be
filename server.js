@@ -16,7 +16,7 @@ import promotionsRoutes from "./src/routes/Promotions.route.js";
 import roleFilter from "./src/middleware/roleFilter.js";
 import trackRoutes from "./src/routes/Track.route.js";
 import vnpayRoutes from "./src/routes/Vnpay.route.js";
-import sendemailRoutes from "./src/routes/Sendemail.route.js";
+
 
 const app = express();
 const PORT = process.env.PORT || 6000;
@@ -51,7 +51,7 @@ app.use("/api", notifisRoutes);
 app.use("/api", promotionsRoutes);
 app.use("/api", trackRoutes);
 app.use("/api", vnpayRoutes);
-app.use("/api", sendemailRoutes);
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server jollicow is running on http://localhost:${PORT}`);

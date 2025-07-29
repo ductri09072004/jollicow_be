@@ -7,6 +7,31 @@ export const validatePasswordStrength = (password) => {
   return regex.test(password);
 };
 
+// utils/validatePhone.js
+export const validatePhoneNumber = (phone) => {
+  // Kiểm tra số điện thoại phải có đúng 10 chữ số
+  const phoneRegex = /^[0-9]{10}$/;
+  return phoneRegex.test(phone);
+};
+
+// Kiểm tra số điện thoại đã tồn tại hay chưa
+export const checkPhoneExists = async (phone) => {
+  try {
+    const staffsRef = database.ref("Staffs");
+    const snapshot = await staffsRef.once("value");
+    const staffs = snapshot.val() || {};
+
+    const phoneExists = Object.values(staffs).some(
+      (staff) => staff.phone === phone
+    );
+    
+    return phoneExists;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra số điện thoại:", error);
+    throw error;
+  }
+};
+
 // Lấy danh sách tất cả requests từ Firebase
 export const getRequests = async (req, res) => {
   try {
@@ -27,6 +52,14 @@ export const getRequests = async (req, res) => {
 //auth account
 export const authenticateUser = async (req, res) => {
   const { phone, password_hash } = req.body; // `password_hash` ở đây là password người dùng nhập
+
+  if (!phone || !password_hash) {
+    return res.status(400).json({ error: "Vui lòng nhập đầy đủ thông tin" });
+  }
+
+  if (!validatePhoneNumber(phone)) {
+    return res.status(400).json({ error: "Số điện thoại không hợp lệ" });
+  }
 
   try {
     const staffRef = database.ref("Staffs");
@@ -129,6 +162,10 @@ export const addRequest = async (req, res) => {
       });
     }
 
+    if (!validatePhoneNumber(phone)) {
+      return res.status(400).json({ error: "Số điện thoại không hợp lệ" });
+    }
+
     // 🔁 Tạo id_staff mới và kiểm tra trùng
     let id_staff;
     let isDuplicate = true;
@@ -167,11 +204,15 @@ export const addRequest = async (req, res) => {
 
 //forget pass
 export const resetPassword = async (req, res) => {
-  const { phone, oldPassword, newPassword } = req.body;
+  const { phone, newPassword } = req.body;
 
   // 🔒 Kiểm tra đầu vào
-  if (!phone || !oldPassword || !newPassword) {
+  if (!phone || !newPassword) {
     return res.status(400).json({ error: "Vui lòng nhập đầy đủ thông tin" });
+  }
+
+  if (!validatePhoneNumber(phone)) {
+    return res.status(400).json({ error: "Số điện thoại không hợp lệ" });
   }
 
   if (!validatePasswordStrength(newPassword)) {
@@ -190,31 +231,17 @@ export const resetPassword = async (req, res) => {
 
     const staffs = snapshot.val();
     let staffKeyToUpdate = null;
-    let staffData = null;
 
     // 🔍 Tìm nhân viên theo số điện thoại
     for (const key of Object.keys(staffs)) {
       if (staffs[key].phone === phone) {
         staffKeyToUpdate = key;
-        staffData = staffs[key];
         break;
       }
     }
 
     if (!staffKeyToUpdate) {
       return res.status(404).json({ error: "Số điện thoại không tồn tại" });
-    }
-
-    // 🧪 So sánh mật khẩu cũ
-    const isOldPasswordCorrect = await bcrypt.compare(oldPassword, staffData.password_hash);
-    if (!isOldPasswordCorrect) {
-      return res.status(401).json({ error: "Mật khẩu cũ không đúng" });
-    }
-
-    // 🔄 Kiểm tra nếu mật khẩu mới giống mật khẩu cũ
-    const isSameAsOld = await bcrypt.compare(newPassword, staffData.password_hash);
-    if (isSameAsOld) {
-      return res.status(400).json({ error: "Mật khẩu mới không được trùng với mật khẩu cũ" });
     }
 
     // 🔐 Mã hóa mật khẩu mới
@@ -238,6 +265,10 @@ export const deleteAccount = async (req, res) => {
 
   if (!phone) {
     return res.status(400).json({ error: "Vui lòng cung cấp số điện thoại" });
+  }
+
+  if (!validatePhoneNumber(phone)) {
+    return res.status(400).json({ error: "Số điện thoại không hợp lệ" });
   }
 
   try {
@@ -415,6 +446,33 @@ export const deleteAccResRequest = async (req, res) => {
   } catch (error) {
     console.error("Lỗi khi xóa nhân viên và nhà hàng:", error);
     res.status(500).json({ error: "Lỗi máy chủ khi xóa nhân viên hoặc nhà hàng" });
+  }
+};
+
+// Kiểm tra số điện thoại đã tồn tại hay chưa (API endpoint)
+export const checkPhoneExistsAPI = async (req, res) => {
+  try {
+    const { phone } = req.params;
+
+    if (!phone) {
+      return res.status(400).json({ error: "Vui lòng cung cấp số điện thoại" });
+    }
+
+    if (!validatePhoneNumber(phone)) {
+      return res.status(400).json({ error: "Số điện thoại không hợp lệ" });
+    }
+
+    const exists = await checkPhoneExists(phone);
+
+    res.status(200).json({
+      phone: phone,
+      exists: exists,
+      message: exists ? "Số điện thoại đã tồn tại" : "Số điện thoại chưa tồn tại"
+    });
+
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra số điện thoại:", error);
+    res.status(500).json({ error: "Lỗi máy chủ khi kiểm tra số điện thoại" });
   }
 };
 
