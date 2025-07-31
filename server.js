@@ -16,6 +16,7 @@ import promotionsRoutes from "./src/routes/Promotions.route.js";
 import roleFilter from "./src/middleware/roleFilter.js";
 import trackRoutes from "./src/routes/Track.route.js";
 import vnpayRoutes from "./src/routes/Vnpay.route.js";
+import { initPromotionCron, runImmediateCheck } from "./src/cron/promotionCron.js";
 
 
 const app = express();
@@ -55,4 +56,10 @@ app.use("/api", vnpayRoutes);
 // Start server
 app.listen(PORT, () => {
   console.log(`Server jollicow is running on http://localhost:${PORT}`);
+  
+  // Khởi tạo cron job cho promotion
+  initPromotionCron();
+  
+  // Chạy kiểm tra ngay lập tức khi server khởi động (tùy chọn)
+  // runImmediateCheck();
 });

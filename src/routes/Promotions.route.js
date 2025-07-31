@@ -7,7 +7,8 @@ import {
   updatePromotion,
   addPromotion,
   deletePromotion,
-  calculateDiscountFromPromotion
+  calculateDiscountFromPromotion,
+  autoUpdatePromotionStatus
 } from "../controllers/Promotions.controller.js";
 
 const router = express.Router();
@@ -20,6 +21,7 @@ const setupPromotionRoutes = (basePath, router) => {
   router.post(`${basePath}/create`, addPromotion);
   router.delete(`${basePath}/:id`, deletePromotion);
   router.post(`${basePath}/calculate`, calculateDiscountFromPromotion);
+  router.get(`${basePath}/auto-update`, autoUpdatePromotionStatus);
 };
 
 // Gọi cho client và admin

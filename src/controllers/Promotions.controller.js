@@ -304,3 +304,64 @@ export const calculateDiscountFromPromotion = async (req, res) => {
   }
 };
 
+// Hàm tự động cập nhật trạng thái promotion (số lượng = 0 hoặc quá hạn)
+export const autoUpdatePromotionStatus = async (req, res) => {
+  try {
+    const promotionsRef = database.ref("Promotions");
+    const snapshot = await promotionsRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu promotion" });
+    }
+
+    const promotions = snapshot.val();
+    const now = new Date();
+    let updatedCount = 0;
+    const updatePromises = [];
+
+    for (const key in promotions) {
+      const promotion = promotions[key];
+      let needsUpdate = false;
+      const updateData = {};
+
+      // Kiểm tra số lượng
+      if (promotion.quantity === 0 && promotion.status !== "inactive") {
+        updateData.status = "inactive";
+        needsUpdate = true;
+      }
+
+      // Kiểm tra ngày hết hạn
+      if (promotion.date_end) {
+        const endDate = new Date(promotion.date_end);
+        if (endDate < now && promotion.status !== "inactive") {
+          updateData.status = "inactive";
+          needsUpdate = true;
+        }
+      }
+
+      // Cập nhật nếu cần
+      if (needsUpdate) {
+        updatePromises.push(
+          promotionsRef.child(key).update(updateData)
+        );
+        updatedCount++;
+      }
+    }
+
+    // Thực hiện tất cả các cập nhật
+    if (updatePromises.length > 0) {
+      await Promise.all(updatePromises);
+    }
+
+    res.json({
+      message: `Đã tự động cập nhật ${updatedCount} promotion`,
+      updatedCount,
+      totalPromotions: Object.keys(promotions).length
+    });
+
+  } catch (error) {
+    console.error("Lỗi khi tự động cập nhật promotion:", error);
+    res.status(500).json({ error: "Lỗi khi tự động cập nhật promotion" });
+  }
+};
+

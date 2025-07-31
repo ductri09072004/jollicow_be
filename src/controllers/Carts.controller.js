@@ -253,6 +253,18 @@ export const createOrderFromCart = async (req, res) => {
       }
 
       discount = Math.min((default_price * percent) / 100, max_discount);
+      
+      // Cập nhật quantity của promotion (trừ đi 1)
+      const promotionKey = Object.keys(promotions).find(key => promotions[key].id_promotion === id_promotion);
+      if (promotionKey) {
+        const newQuantity = Math.max(0, quantity - 1);
+        await promotionsRef.child(promotionKey).update({ 
+          quantity: newQuantity,
+          // Tự động chuyển status thành inactive nếu quantity = 0
+          ...(newQuantity === 0 && { status: "inactive" })
+        });
+        console.log(`📦 Đã trừ 1 lượt sử dụng promotion ${id_promotion}, còn lại: ${newQuantity}`);
+      }
     }
 
     const total_price = Math.floor(default_price - discount);
