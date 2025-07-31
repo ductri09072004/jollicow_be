@@ -27,7 +27,7 @@ function generateRandomIdTopping() {
 }
 
 // Hàm tạo một đối tượng Topping
-function buildToppingObject(id_dishes, name_details, options) {
+function buildToppingObject(id_dishes, name_details, options, mustChoose = false) {
   const id_topping = generateRandomIdTopping();
 
   const formattedOptions = options.map((opt, index) => ({
@@ -40,6 +40,7 @@ function buildToppingObject(id_dishes, name_details, options) {
     id_dishes,
     id_topping,
     name_details,
+    mustChoose: mustChoose !== undefined ? mustChoose : false,
     options: formattedOptions,
   };
 }
@@ -47,7 +48,7 @@ function buildToppingObject(id_dishes, name_details, options) {
 // API tạo topping mới và lưu vào Firebase
 export const createTopping = async (req, res) => {
   try {
-    const { id_dishes, name_details, options } = req.body;
+    const { id_dishes, name_details, options, mustChoose } = req.body;
 
     if (!id_dishes || !name_details || !options || !Array.isArray(options)) {
       return res.status(400).json({ error: "Dữ liệu không hợp lệ" });
@@ -99,7 +100,7 @@ export const createTopping = async (req, res) => {
       });
     } else {
       // ❌ Không tồn tại → tạo mới bằng buildToppingObject như cũ
-      const newTopping = buildToppingObject(id_dishes, name_details, options);
+      const newTopping = buildToppingObject(id_dishes, name_details, options, mustChoose);
       const newToppingRef = toppingRef.push();
       await newToppingRef.set(newTopping);
 
@@ -114,7 +115,6 @@ export const createTopping = async (req, res) => {
     res.status(500).json({ error: "Lỗi server khi tạo topping" });
   }
 };
-
 
 
 // Lọc topping theo id_dishes (POST)

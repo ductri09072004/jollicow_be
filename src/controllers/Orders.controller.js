@@ -244,6 +244,8 @@ export const filter3in1Requests = async (req, res) => {
           id_table: order.id_table || "",
           date_create: order.date_create || "",
           id_order: order.id_order,
+          default_price: order.default_price || 0,
+          total_price: order.total_price || 0,
           items: []
         };
       }
@@ -307,6 +309,7 @@ for (const itemKey of Object.keys(allItems)) {
         name_topping: toppingNames,
         note: item.note || "",
         quantity: item.quantity || 0,
+        price: item.price || 0,
         id_dishes: dishNameMap[item.id_dishes] || item.id_dishes || ""
       });
     }
