@@ -88,16 +88,30 @@ export const updatePromotion = async (req, res) => {
       return res.status(404).json({ error: "Không tìm thấy promotion" });
     }
 
-    // Lấy dữ liệu hiện tại và loại bỏ id_promotion khỏi cập nhật
+    // Lấy dữ liệu hiện tại và loại bỏ các trường không được phép cập nhật
     const currentData = snapshot.val();
-    const { id_promotion, ...rest } = updatedFields;
+    const { id_promotion, id_restaurant, ...allowedFields } = updatedFields;
 
-    // Nếu quantity = 0 thì status chuyển thành 'inactive'
-    if (rest.quantity === 0) {
-      rest.status = "inactive";
+    // Kiểm tra nếu có trường không được phép cập nhật
+    if (id_promotion !== undefined) {
+      return res.status(400).json({ error: "Không được phép cập nhật id_promotion" });
     }
 
-    await ref.update(rest);
+    if (id_restaurant !== undefined) {
+      return res.status(400).json({ error: "Không được phép cập nhật id_restaurant" });
+    }
+
+    // Nếu quantity = 0 thì status chuyển thành 'inactive'
+    if (allowedFields.quantity === 0) {
+      allowedFields.status = "inactive";
+    }
+
+    // Kiểm tra nếu không có trường nào hợp lệ để cập nhật
+    if (Object.keys(allowedFields).length === 0) {
+      return res.status(400).json({ error: "Không có trường hợp lệ để cập nhật" });
+    }
+
+    await ref.update(allowedFields);
 
     res.json({ message: "Cập nhật promotion thành công" });
   } catch (error) {
