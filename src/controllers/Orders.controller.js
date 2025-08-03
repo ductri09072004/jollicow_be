@@ -559,6 +559,72 @@ for (const itemKey of Object.keys(allItems)) {
   }
 };
 
+// Hàm đóng tất cả đơn hàng của một bàn
+export const closeTableOrders = async (req, res) => {
+  try {
+    const { id_restaurant, id_table } = req.body;
+
+    if (!id_restaurant || !id_table) {
+      return res.status(400).json({ error: "Thiếu id_restaurant hoặc id_table trong body" });
+    }
+
+    // Lấy Orders
+    const ordersRef = database.ref("Orders");
+    const ordersSnapshot = await ordersRef.once("value");
+
+    if (!ordersSnapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu Orders" });
+    }
+
+    const allOrders = ordersSnapshot.val();
+    const ordersToUpdate = [];
+    let updatedCount = 0;
+
+    // Tìm các đơn hàng cần cập nhật
+    for (const orderKey in allOrders) {
+      const order = allOrders[orderKey];
+      
+      if (
+        order.id_restaurant === id_restaurant &&
+        order.id_table === id_table &&
+        order.status_order !== "closed" &&
+        order.status_order !== "cancelled"
+      ) {
+        ordersToUpdate.push({
+          orderKey,
+          order
+        });
+      }
+    }
+
+    if (ordersToUpdate.length === 0) {
+      return res.status(200).json({ 
+        message: "Không có đơn hàng nào cần cập nhật cho bàn này",
+        updatedCount: 0
+      });
+    }
+
+    // Cập nhật tất cả đơn hàng thành "closed"
+    const updatePromises = ordersToUpdate.map(({ orderKey }) => {
+      return database.ref(`Orders/${orderKey}`).update({ status_order: "closed" });
+    });
+
+    await Promise.all(updatePromises);
+    updatedCount = ordersToUpdate.length;
+
+    res.json({ 
+      message: `Đã đóng ${updatedCount} đơn hàng của bàn ${id_table}`,
+      updatedCount,
+      tableId: id_table,
+      restaurantId: id_restaurant
+    });
+
+  } catch (error) {
+    console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error);
+    res.status(500).json({ error: "Lỗi khi cập nhật trạng thái đơn hàng" });
+  }
+};
+
 
 
 

@@ -12,7 +12,8 @@ import {
   softByResDoneRequests,
   calculateMonthlyRevenueByRestaurant,
   countOrdersByStatus,
-  billfortable
+  billfortable,
+  closeTableOrders
 } from "../controllers/Orders.controller.js";
 
 const router = express.Router();
@@ -30,6 +31,7 @@ const setupOrderRoutes = (basePath, router) => {
   router.post(`${basePath}/billfortable`, billfortable);
   router.post(`${basePath}/filterresdone`, softByResDoneRequests);
   router.post(`${basePath}/count-status`, countOrdersByStatus);
+  router.post(`${basePath}/closeTable`, closeTableOrders);
 };
 
 // Khai báo cho cả /orders và /admin/orders

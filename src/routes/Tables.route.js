@@ -8,7 +8,8 @@ import {
   addRequest,
   updateTableByIdTable,
   deleteRequest,
-  softRestaurantRequests
+  softRestaurantRequests,
+  getActiveTables
 } from "../controllers/Tables.controller.js";
 
 const router = express.Router();
@@ -22,6 +23,7 @@ const setupTableRoutes = (basePath, router) => {
   router.post(`${basePath}/update_table`, updateTableByIdTable);
   router.delete(`${basePath}/:id`, deleteRequest);
   router.post(`${basePath}/softbyres`, softRestaurantRequests);
+  router.post(`${basePath}/tableactive`, getActiveTables);
 };
 
 // Gọi cho cả client và admin

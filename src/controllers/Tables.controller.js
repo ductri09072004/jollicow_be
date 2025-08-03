@@ -214,4 +214,69 @@ export const softRestaurantRequests = async (req, res) => {
   }
 };
 
+// Hàm kiểm tra bàn có đơn hàng đang hoạt động
+export const getActiveTables = async (req, res) => {
+  const { restaurant_id } = req.body;
+
+  try {
+    // Lấy tất cả bàn của nhà hàng
+    const tablesRef = database.ref("Tables");
+    const tablesSnapshot = await tablesRef.once("value");
+
+    if (!tablesSnapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu bàn" });
+    }
+
+    const tables = tablesSnapshot.val();
+    const activeTables = [];
+
+    // Lấy tất cả đơn hàng
+    const ordersRef = database.ref("Orders");
+    const ordersSnapshot = await ordersRef.once("value");
+
+    if (!ordersSnapshot.exists()) {
+      return res.status(404).json({ error: "Không có dữ liệu đơn hàng" });
+    }
+
+    const orders = ordersSnapshot.val();
+
+    // Kiểm tra từng bàn
+    for (const tableKey in tables) {
+      const table = tables[tableKey];
+      
+      if (table.restaurant_id === restaurant_id) {
+        // Kiểm tra xem bàn này có đơn hàng đang hoạt động không
+        let hasActiveOrder = false;
+        
+        for (const orderKey in orders) {
+          const order = orders[orderKey];
+          
+          if (
+            order.id_table === table.id_table &&
+            order.id_restaurant === restaurant_id &&
+            order.status_order !== "closed" &&
+            order.status_order !== "cancelled"
+          ) {
+            hasActiveOrder = true;
+            break;
+          }
+        }
+        
+        // Nếu bàn có đơn hàng đang hoạt động thì thêm vào kết quả
+        if (hasActiveOrder) {
+          activeTables.push({
+            id: tableKey,
+            id_table: table.id_table,
+            restaurant_id: table.restaurant_id
+          });
+        }
+      }
+    }
+
+    res.json(activeTables);
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu:", error);
+    res.status(500).json({ error: "Lỗi khi lấy dữ liệu" });
+  }
+};
 
