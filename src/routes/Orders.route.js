@@ -11,7 +11,8 @@ import {
   filter3in1Requests,
   softByResDoneRequests,
   calculateMonthlyRevenueByRestaurant,
-  countOrdersByStatus
+  countOrdersByStatus,
+  billfortable
 } from "../controllers/Orders.controller.js";
 
 const router = express.Router();
@@ -26,6 +27,7 @@ const setupOrderRoutes = (basePath, router) => {
   router.put(`${basePath}/update_status`, updateStatus);
   router.delete(`${basePath}/deleteall/:id`, deleteRequest);
   router.post(`${basePath}/filler3in1`, filter3in1Requests);
+  router.post(`${basePath}/billfortable`, billfortable);
   router.post(`${basePath}/filterresdone`, softByResDoneRequests);
   router.post(`${basePath}/count-status`, countOrdersByStatus);
 };
