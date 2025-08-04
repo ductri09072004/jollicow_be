@@ -174,7 +174,7 @@ export const filterCartsByTableAndRestaurant = async (req, res) => {
 //thêm nâng cao order
 export const createOrderFromCart = async (req, res) => {
   try {
-    const { id_restaurant, id_table, id_promotion = null, payment = "Chưa thanh toán" } = req.body;
+    const { id_restaurant, id_table, id_promotion = null, payment = "Đã thanh toán" } = req.body;
 
     if (!id_restaurant || !id_table) {
       return res.status(400).json({ error: "Thiếu id_restaurant hoặc id_table" });
